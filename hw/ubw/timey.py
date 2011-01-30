@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # -----------------------------------------------------------------
-# bitwhack.py -- $desc$
+# timey.py -- Raise and lower a pin at increasing and decreasing time
+# intervals. The idea is to hook up an LED and watch it blink.
+# 
 # Copyright 2010 Michael Kelly (michael@michaelkelly.org)
 #
 # This program is released under the terms of the GNU General Public
