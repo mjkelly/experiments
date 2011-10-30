@@ -33,14 +33,18 @@ import subprocess
 import sys
 
 def tar_list(tar_file):
-  """Returns a list of all files in the given tar file."""
+  """Returns a list of all files in the given tar file.
+
+  Returns: ([str], str) A tuple of the list of files (or None) and any stderr
+           output from tar.
+  """
   proc = subprocess.Popen(['/bin/tar', '-tf', tar_file],
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   stdout, stderr = proc.communicate()
   if proc.returncode:
-    return None
+    return (None, stderr)
   else:
-    return stdout.strip().split('\n')
+    return (stdout.strip().split('\n'), stderr)
 
 
 def base_directories(paths):
@@ -91,6 +95,10 @@ def usage():
   print >>sys.stderr, usage_str
 
 
+def error(msg):
+  print >>sys.stderr, '%s: %s' % (sys.argv[0], msg)
+
+
 def main(argv):
   if len(argv) < 2:
     usage()
@@ -98,13 +106,18 @@ def main(argv):
   tar_file = argv[-1]
   flags = argv[1:-1]
 
-  files = tar_list(tar_file)
+  files, stderr = tar_list(tar_file)
   if files is None:
-    print >>sys.stderr, (
-        'Could not parse tar file listing for %s. Aborting.' % tar_file)
+    error("Could not parse tar file listing for '%s':\n%s" % (tar_file, stderr))
+    return 1
+
   if len(base_directories(files)) > 1:
     base = archive_name(tar_file)
-    os.mkdir(base)
+    try:
+      os.mkdir(base)
+    except OSError, e:
+      error("Could not create directory '%s': %s" % (base, e))
+      return 1
   else:
     base = None
   untar(tar_file, extra_args=flags, directory=base)
