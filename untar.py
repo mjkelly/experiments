@@ -24,6 +24,8 @@
 # untar.py always passes '-x', '-f', and '-C FILE' to tar, so passing them
 # explicitly doesn't make any sense.
 #
+# Tested with: tar (GNU tar) 1.23
+#
 # Sat Oct 29 22:01:23 EDT 2011
 # -----------------------------------------------------------------
 
