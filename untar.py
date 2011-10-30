@@ -34,13 +34,15 @@ import re
 import subprocess
 import sys
 
+_TAR = '/bin/tar'
+
 def tar_list(tar_file):
   """Returns a list of all files in the given tar file.
 
   Returns: ([str], str) A tuple of the list of files (or None) and any stderr
            output from tar.
   """
-  proc = subprocess.Popen(['/bin/tar', '-tf', tar_file],
+  proc = subprocess.Popen([_TAR, '-tf', tar_file],
                           stdout=subprocess.PIPE, stderr=subprocess.PIPE)
   stdout, stderr = proc.communicate()
   if proc.returncode:
@@ -72,19 +74,19 @@ def archive_name(archive_path):
 def untar(tar_file, extra_args, directory):
   """Untars a file.
 
-  Automatically 
-
   Args:
     extra_args: [str] Extra args to add, before the filename.
     directory: (str) Untar into the given dirctory. If None, use the
                CWD.
+  Returns:
+    exit code from tar
   """
-  cmd = ['/bin/tar'] + extra_args + ['-xf', tar_file]
+  cmd = [_TAR] + extra_args + ['-xf', tar_file]
   if directory is not None:
     cmd += ['-C', directory]
   proc = subprocess.Popen(cmd)
-  stdout, stderr = proc.communicate()
-  return proc.returncode == 0
+  proc.communicate()
+  return proc.returncode
 
 
 def usage():
@@ -122,6 +124,6 @@ def main(argv):
       return 1
   else:
     base = None
-  untar(tar_file, extra_args=flags, directory=base)
+  return untar(tar_file, extra_args=flags, directory=base)
 
 sys.exit(main(sys.argv))
