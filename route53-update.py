@@ -34,12 +34,20 @@ parser.add_option('--zone-id', dest='zone_id',
 parser.add_option('--ip', dest='ip', help='New IPv4 for domain name, or '
                   '"auto" to attempt to auto-detect. "auto" does not work '
                   'from behind a NAT. Required.')
+parser.add_option('--quiet', dest='quiet', default=True, action="store_true",
+                  help="Don't output to stdout unless there is an error.")
 opts, _ = parser.parse_args()
 
 def usage():
-  print '--amz-key-id, --amz-key-secret, --domain, --zone-id, and --ip are REQUIRED.'
+  print >>sys.stderr, ('--amz-key-id, --amz-key-secret, --domain, --zone-id, '
+                       'and --ip are REQUIRED.')
   parser.print_help()
   sys.exit(2)
+
+def qprint(msg):
+  """Print unless we're in quiet mode."""
+  if not opts.quiet:
+    print msg
 
 def get_time_and_ip():
   """Gets the current time from amazon servers.
@@ -155,7 +163,7 @@ if opts.ip == "auto":
 else:
   new_ip = opts.ip
 
-print 'Will set %s to %s' % (domain, new_ip)
+qprint('Will set %s to %s' % (domain, new_ip))
 
 auth = make_auth(time_str, key_id, secret)
 headers = {
@@ -175,7 +183,7 @@ if old_ip is None:
   raise RuntimeError('Previous IP for A record does not exist or is not parseable.')
 
 if old_ip == new_ip:
-  print 'Old IP %s is same as new IP. Quitting.' % old_ip
+  qprint('Old IP %s is same as new IP. Quitting.' % old_ip)
   sys.exit(0)
 
 connection = httplib.HTTPSConnection('route53.amazonaws.com')
@@ -186,4 +194,4 @@ change_body = body.format(name=domain,
                           new_ttl=300)
 connection.request('POST', change_rrset_path, change_body, headers)
 response = connection.getresponse()
-print 'Response: %s' % response.read()
+qprint('Response: %s' % response.read())
