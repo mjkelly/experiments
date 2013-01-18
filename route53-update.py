@@ -34,19 +34,29 @@ parser.add_option('--zone-id', dest='zone_id',
 parser.add_option('--ip', dest='ip', help='New IPv4 for domain name, or '
                   '"auto" to attempt to auto-detect. "auto" does not work '
                   'from behind a NAT. Required.')
-parser.add_option('--quiet', dest='quiet', default=True, action="store_true",
+parser.add_option('--quiet', '-q', dest='quiet', default=False,
+                  action="store_true",
                   help="Don't output to stdout unless there is an error.")
+parser.add_option('--verbose', '-v', dest='verbose', default=False,
+                  action="store_true",
+                  help="Output more information.")
+parser.add_option('--force', '-f', dest='force', default=False,
+                  action="store_true",
+                  help="Update the A record even if it has not changed.")
 opts, _ = parser.parse_args()
 
 def usage():
-  print >>sys.stderr, ('--amz-key-id, --amz-key-secret, --domain, --zone-id, '
-                       'and --ip are REQUIRED.')
   parser.print_help()
   sys.exit(2)
 
-def qprint(msg):
+def log(msg):
   """Print unless we're in quiet mode."""
   if not opts.quiet:
+    print msg
+
+def vlog(msg):
+  """Print if we're in verbose mode."""
+  if opts.verbose:
     print msg
 
 def get_time_and_ip():
@@ -148,9 +158,15 @@ body = """<?xml version="1.0" encoding="UTF-8"?>
 </ChangeResourceRecordSetsRequest>
 """
 
-# Check for all required args.
+# ========== main ==========
+
 if (not opts.key_id or not opts.key_secret or not opts.domain or
     not opts.zone_id or not opts.ip):
+  print >>sys.stderr, ('-amz-key-id, --amz-key-secret, --domain, --zone-id, '
+                       'and --ip are required.\n')
+  usage()
+if opts.quiet and opts.verbose:
+  print >>sys.stderr, '--quiet and --verbose are mutually exclusive.'
   usage()
 
 time_str, default_iface_ip = get_time_and_ip()
@@ -163,7 +179,7 @@ if opts.ip == "auto":
 else:
   new_ip = opts.ip
 
-qprint('Will set %s to %s' % (domain, new_ip))
+vlog('Will set %s to %s' % (domain, new_ip))
 
 auth = make_auth(time_str, key_id, secret)
 headers = {
@@ -176,22 +192,31 @@ get_rrset_path = '/2012-02-29/hostedzone/%s/rrset?name=%s&type=A&maxitems=1' % (
 change_rrset_path = '/2012-02-29/hostedzone/%s/rrset' % zone_id
 
 connection = httplib.HTTPSConnection('route53.amazonaws.com')
+vlog('GET %s' % get_rrset_path)
+
 connection.request('GET', get_rrset_path, '', headers)
 response = connection.getresponse()
-old_ip, old_ttl = get_old_record_values(response.read())
+response_txt = response.read()
+vlog('Response:\n%s' % response_txt)
+
+old_ip, old_ttl = get_old_record_values(response_txt)
 if old_ip is None:
   raise RuntimeError('Previous IP for A record does not exist or is not parseable.')
 
-if old_ip == new_ip:
-  qprint('Old IP %s is same as new IP. Quitting.' % old_ip)
+if old_ip == new_ip and not opts.force:
+  vlog('Old IP %s is same as new IP. Quitting.' % old_ip)
   sys.exit(0)
+else:
+  log('Updating %s to %s (was %s)' % (domain, new_ip, old_ip))
 
 connection = httplib.HTTPSConnection('route53.amazonaws.com')
 change_body = body.format(name=domain,
                           old_value=old_ip,
                           old_ttl=old_ttl,
                           new_value=new_ip,
-                          new_ttl=300)
+                          new_ttl=old_ttl)
+vlog('POST %s\n%s' % (change_rrset_path, change_body))
+
 connection.request('POST', change_rrset_path, change_body, headers)
 response = connection.getresponse()
-qprint('Response: %s' % response.read())
+vlog('Response:\n%s' % response.read())
