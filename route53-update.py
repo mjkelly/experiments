@@ -28,7 +28,7 @@ parser.add_option('--amz-key-id', dest='key_id',
 parser.add_option('--amz-key-secret', dest='key_secret',
                   help='Amazon API key secet value. Required.')
 parser.add_option('--domain', dest='domain',
-                  help='Domain name to update. Required.')
+                  help='Domain name to update, ending with a dot. Required.')
 parser.add_option('--zone-id', dest='zone_id',
                   help='Amazon zone ID containing domain name. Required.')
 parser.add_option('--ip', dest='ip', help='New IPv4 for domain name, or '
@@ -178,11 +178,14 @@ body = """<?xml version="1.0" encoding="UTF-8"?>
 
 if (not opts.key_id or not opts.key_secret or not opts.domain or
     not opts.zone_id or not opts.ip):
-  print >>sys.stderr, ('-amz-key-id, --amz-key-secret, --domain, --zone-id, '
+  print >>sys.stderr, ('--amz-key-id, --amz-key-secret, --domain, --zone-id, '
                        'and --ip are required.\n')
   usage()
 if opts.quiet and opts.verbose:
   print >>sys.stderr, '--quiet and --verbose are mutually exclusive.'
+  usage()
+if not opts.domain.endswith('.'):
+  print >>sys.stderr, '--domain should be fully-qualified, and end with a dot.'
   usage()
 
 time_str, default_iface_ip = get_time_and_ip()
