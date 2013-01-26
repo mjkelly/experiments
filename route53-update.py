@@ -245,3 +245,7 @@ vlog('POST %s\n%s' % (change_rrset_path, change_body))
 connection.request('POST', change_rrset_path, change_body, headers)
 response = connection.getresponse()
 vlog('Response:\n%s' % response.read())
+
+if response.status != httplib.OK:
+  raise RuntimeError('Address update returned non-OK repsonse: %s (not %s)' % (
+      response.status, httplib.OK))
