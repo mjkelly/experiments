@@ -45,6 +45,8 @@ parser.add_option('--force', '-f', dest='force', default=False,
                   help="Update the A record even if it has not changed.")
 opts, _ = parser.parse_args()
 
+AMAZON_NS = 'https://route53.amazonaws.com/doc/2012-02-29/'
+
 def usage():
   parser.print_help()
   sys.exit(2)
@@ -89,6 +91,9 @@ def make_auth(time_str, key_id, secret):
   return 'AWS3-HTTPS AWSAccessKeyId=%s,Algorithm=HmacSHA256,Signature=%s' % (
       key_id, h_b64)
 
+def qualify_path(path):
+  return path.replace('/', '/{%s}' % AMAZON_NS)
+
 def get_old_record_values(doc, name):
   """Returns the old values of the record we will update.
 
@@ -102,34 +107,35 @@ def get_old_record_values(doc, name):
   """
   # TODO(mjkelly): This method could really use some tests.
   root = ElementTree.fromstring(doc)
-  NS = '{https://route53.amazonaws.com/doc/2012-02-29/}'
+  recordset_path = './ResourceRecordSets/ResourceRecordSet'
+  value_path = './ResourceRecords/ResourceRecord/Value'
 
   # TODO(mjkelly): Consider just grabbing the content of <ResourceRecords>
   # verbatim so we can put it in the delete part of our request. ElementTree
-  # doens't print out the XML tree like it comes in, though -- I don't know if
-  # Route 53 will understand it. 
-  for child in root.iter(NS + 'ResourceRecordSet'):
-    rec_type = child.find(NS + 'Type')
-    rec_ttl = child.find(NS + 'TTL')
-    rec_name = child.find(NS + 'Name')
-    rec_values = list(child.iter(NS + 'Value'))
+  # doesn't print out the XML tree like it comes in, though -- I don't know if
+  # Route 53 will understand it.
+  for node in root.findall(qualify_path(recordset_path)):
+    rec_name = node.find(qualify_path('./Name'))
+    rec_type = node.find(qualify_path('./Type'))
+    rec_ttl = node.find(qualify_path('./TTL'))
+    rec_values = list(node.findall(qualify_path(value_path)))
+    if rec_name is None or rec_type is None or rec_ttl is None:
+      raise ValueError("Response does not have required children: Name, Type, TTL")
 
-    if rec_type is None or rec_ttl is None or rec_name is None:
-      raise ValueError('Cannot find all required elements: Type, Name, TTL.')
-    if rec_type.text != 'A':
-      raise ValueError('Bad record type %s (must be "A")' % rec_type.text)
-    if len(rec_values) != 1:
-      raise ValueError(
-          'Can only update resource record with exactly one A value.')
-    rec_type, rec_ttl, rec_name = rec_type.text, rec_ttl.text, rec_name.text
+    rec_name, rec_type, rec_ttl = rec_name.text, rec_type.text, rec_ttl.text
     rec_value = rec_values[0].text
-
-    vlog('Found record %s: type=%s, name=%s, values=%s' % (
-      child.tag, rec_type, rec_name, rec_value))
     if rec_name != name:
-      vlog('Still looking for record %s...' % name)
+      vlog('Skipping record with name %s (searching for "%s")' % (
+          rec_name, name))
       continue
+    if rec_type != 'A':
+      vlog('Skipping node with type %s (seaching for "A")' % rec_type)
+      continue
+    if len(rec_values) != 1:
+      raise ValueError("Record must contain exactly Value element")
 
+    vlog("Found suitable record: %s %s (TTL=%s) = %s" % (
+        rec_type, rec_name, rec_ttl, rec_value))
     return rec_value, rec_ttl
 
   raise ValueError('Could not find existing A record for %s' % name)
