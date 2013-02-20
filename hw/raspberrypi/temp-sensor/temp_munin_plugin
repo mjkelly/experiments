@@ -1,0 +1,20 @@
+#!/bin/sh
+# A simple munin plugin for retrieving a temperature value, stored in a file.
+# Michael Kelly (michael@michaelkelly.org)
+# Tue Feb 19 22:43:05 EST 2013
+
+TEMP_FILE=/var/tmp/current_temp_c
+
+case $1 in
+   config)
+        cat <<'EOM'
+graph_title Temperature (C)
+graph_vlabel temp
+graph_category sensors
+temp.label Temperature (C)
+EOM
+        exit 0;;
+esac
+
+echo -n "temp.value "
+cat ${TEMP_FILE}
