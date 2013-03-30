@@ -16,7 +16,7 @@ import math
 import random
 import sys
 
-num_words = 4
+num_words = 5
 num_sentences = 10
 dictionary = '/usr/share/dict/words'
 
