@@ -3,6 +3,10 @@
 # Outputs data to a log, and keeps a running average of the last few recent
 # temp readings.
 #
+# This script writes to 3 external files: See LOG_FILE, PID_FILE, and
+# CURRENT_TEMP_FILE. The init-script uses PID_FILE, the munin plugin uses
+# CURRENT_TEMP_FILE, and nothing external uses LOG_FILE.
+#
 # Based on adafruit-cosm-temp.py from:
 # https://gist.github.com/ladyada/3249416#file-adafruit-cosm-temp-py
 # Changes:
@@ -13,11 +17,12 @@
 # Sat Feb 16 21:47:25 EST 2013
 
 import datetime
-import time
-import os
-import RPi.GPIO as GPIO
 import logging
 import logging.handlers
+import os
+import RPi.GPIO as GPIO
+import sys
+import time
 
 # change these as desired - they're the pins connected from the
 # SPI port on the ADC to the Cobbler
@@ -26,7 +31,8 @@ SPIMISO = 23
 SPIMOSI = 24
 SPICS = 25
 
-LOG_FILE = '/var/log/templog'
+LOG_FILE = '/var/log/read-temp-sensor.py.log'
+PID_FILE = '/var/run/read-temp-sensor.py.pid'
 CURRENT_TEMP_FILE = '/var/tmp/current_temp_c'
 SLEEP_TIME_S = 30
 
@@ -103,6 +109,36 @@ def output_data(data_read_time, read_adc0, millivolts, temp_C):
     logger.error("Error writing current temperature: %s", e)
 
 
+####################################################################
+# daemonize
+# (There are libraries to do this, but I'm trying to keep this as self-contained as possible.)
+
+pid = os.fork()
+if pid < 0:
+  sys.exit(1)
+if pid > 0:
+  sys.exit(0)  # parent exits
+
+# make our own process group
+os.setsid()
+
+# erase context from caller
+os.chdir('/')
+
+sys.stdout.flush()
+sys.stderr.flush()
+
+new_fd = os.open('/dev/null', os.O_RDWR)
+os.dup2(new_fd, sys.stdout.fileno())
+os.dup2(new_fd, sys.stderr.fileno())
+os.dup2(new_fd, sys.stdin.fileno())
+# done daemonizing
+
+
+with open(PID_FILE, 'w') as fh:
+  fh.write(str(os.getpid()))
+
+
 GPIO.setmode(GPIO.BCM)
 
 # set up the SPI interface pins
@@ -110,6 +146,8 @@ GPIO.setup(SPIMOSI, GPIO.OUT)
 GPIO.setup(SPIMISO, GPIO.IN)
 GPIO.setup(SPICLK, GPIO.OUT)
 GPIO.setup(SPICS, GPIO.OUT)
+
+logger.info('Starting.')
 
 # temperature sensor connected channel 0 of mcp3008
 adcnum = 0
