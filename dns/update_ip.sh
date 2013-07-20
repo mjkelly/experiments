@@ -1,6 +1,6 @@
 #!/bin/bash
-# This script updates your a specific domain name in route53. It is designed to
-# be run via crontab. The underlying update script will not push changes unless
+# This script updates a specific domain name in route53. It is designed to be
+# run via crontab. The underlying update script will not push changes unless
 # there is a change in the IP.
 #
 # Michael Kelly
@@ -18,7 +18,7 @@ key_secret="ADDME"
 # == How to get current IP ==
 # There is no reason to change this unless the given server changes.
 ip_server="http://checkip.dyndns.com"
-current_ip="$(wget -q -O- ${ip_server} | perl -pe '/IP Address: ([\d\.]+)/; $_ = $1;')"
+current_ip="$(wget -q -O- ${ip_server} | perl -ne '/IP Address: ([\d\.]+)/; print $1;')"
 
 # == Update script ==
 # Change the path to the route53-update script if necessary.
