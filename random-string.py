@@ -24,37 +24,57 @@ import sys
 import argparse
 
 parser = argparse.ArgumentParser(description='Generate random printable strings.')
-parser.add_argument('--alphanumeric', default=False, action='store_true',
-                    help='only generate strings from alphanumeric characters')
-parser.add_argument('length', default=16, type=int,
+parser.add_argument('--quiet', default=False, action='store_true',
+                    help='Suppress unnecessary output.')
+parser.add_argument('--alphanum', default=False, action='store_true',
+                    help='Only generate strings from alphanumeric characters. '
+                         'Mutually exclusive with --loweralphanum.')
+parser.add_argument('--loweralphanum', default=False, action='store_true',
+                    help='Only generate strings from lowercase alphanumeric characters. '
+                         'Mutually exclusive with --alphanum.')
+parser.add_argument('length', default=16, nargs='?', type=int,
                     help='Number of characters in password.')
 args = parser.parse_args()
 
-chars_alphanumeric = list(
+chars_loweralpha = list(
   'abcdefghijklmnopqrstuvwxyz'
-  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   '0123456789'
 )
 
+# This is included only if --loweralphanum is false.
+chars_upperalpha = list(
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+)
+
+# This is included only if --alphanum and --loweralphanum are false.
 # This list is a little restricted based on what I think will be reasonable to
-# type on most keyboards. I'm skipping: `$'"
-# This isn't scientific; it's just guessing.
-chars_extra = list(
+# type on most keyboards. I'm skipping: $, which is US-centric. This isn't
+# scientific; it's just guessing, based on me staring at my Thinkpad keyboard.
+chars_symbols = list(
   '~!@#%^&*()-_=+'
   '[]{}|;:<>,./?'
 )
 
+if args.loweralphanum and args.alphanum:
+  raise Exception('Cannot specify both --loweralphanum and --alphanum!')
+
 password_length = args.length
-if args.alphanumeric:
-  chars = chars_alphanumeric
+if args.loweralphanum:
+  chars = chars_loweralpha
+elif args.alphanum:
+  chars = chars_loweralpha + chars_upperalpha
 else:
-  chars = chars_alphanumeric + chars_extra
+  chars = chars_loweralpha + chars_upperalpha + chars_symbols
 
 bits_per_char = math.log(len(chars), 2)
 total_bits = bits_per_char * password_length
-print 'Choosing from %d characters. %2.3f bits of entropy per character.' % (len(chars), bits_per_char)
-print '%d characters long.' % password_length
-print '%2.3f total bits of entropy for password.' % total_bits
+
+if not args.quiet:
+  print '%d characters long.' % password_length
+  print 'Choosing from %d characters. %2.3f bits of entropy per character.' % (len(chars), bits_per_char)
+  print '%2.3f total bits of entropy for password.' % total_bits
+  print
+  print 'Password:'
 
 r = random.SystemRandom()
 
