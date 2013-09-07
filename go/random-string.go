@@ -3,12 +3,12 @@ package main
 
 import (
 	"bytes"
+	"crypto/rand"
 	"flag"
 	"fmt"
 	"log"
 	"math"
-	"math/rand"
-	"time"
+	"math/big"
 )
 
 // Flags.
@@ -50,19 +50,9 @@ func main() {
 		chars = append(chars, SymbolChars...)
 	}
 	numChars := len(chars)
+	numCharsBig := big.NewInt(int64(numChars)) // used for crypto/rand
 	bitsPerChar := math.Log2(float64(numChars))
 	totalBits := bitsPerChar * float64(*PasswordLength)
-
-	// TODO(mjkelly): I've read that the math/rand package is extremely
-	// predictable, and seeding it with the current time only gives a few bytes
-	// of entropy anyway. Figure out a better source of randomness.
-	r := rand.New(rand.NewSource(time.Now().UnixNano()))
-
-	fmt.Println("*** WARNING! ***")
-	fmt.Println("Seeding random values with time.Now().UnixNano(), which may " +
-		"not be good enough. This program is currenly a curiosity only. Don't " +
-		"use it for passwords you care about.")
-	fmt.Println("*** WARNING! ***\n")
 
 	if !*Quiet {
 		fmt.Printf("%d characters long.\n", *PasswordLength)
@@ -74,7 +64,11 @@ func main() {
 
 	var passBuffer bytes.Buffer
 	for i := 0; i < *PasswordLength; i++ {
-		randChar := chars[r.Intn(numChars)]
+		randBig, err := rand.Int(rand.Reader, numCharsBig)
+		if err != nil {
+			log.Fatalf("%s", err)
+		}
+		randChar := chars[randBig.Int64()]
 		passBuffer.WriteByte(randChar)
 	}
 
