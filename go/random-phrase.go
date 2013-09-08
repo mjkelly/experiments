@@ -1,4 +1,4 @@
-// random-string generates a configurable random string, for passwords.
+// random-phrase generates a configurable random passphrase.
 package main
 
 import (
