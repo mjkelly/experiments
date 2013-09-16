@@ -7,6 +7,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"log"
 	"math/rand"
@@ -15,6 +16,10 @@ import (
 	"strconv"
 	"strings"
 	"time"
+)
+
+var (
+	Words = flag.Int("words", 50, "how many words to generate")
 )
 
 // Corpus is a full set of word pairs with frequencies.
@@ -121,16 +126,17 @@ func (corpus *Corpus) ReadCounts(filename string) (error, ReadStats) {
 }
 
 func main() {
-	if len(os.Args) < 2 {
-		log.Fatal("not enough arguments: usage: %s <COUNTS1> [<COUNTS2>...]")
+	flag.Parse()
+	if len(flag.Args()) < 1 {
+		log.Fatal("not enough arguments: usage: %s <counts_file...>")
 	}
 	// This is not a cryptographically secure seed, but it's good enough for
 	// making funny random sentences.
 	rand.Seed(time.Now().UnixNano())
 
 	corpus := NewCorpus()
-	for i := 1; i < len(os.Args); i++ {
-		err, stats := corpus.ReadCounts(os.Args[i])
+	for _, arg := range flag.Args() {
+		err, stats := corpus.ReadCounts(arg)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -138,7 +144,7 @@ func main() {
 	}
 
 	word := ""
-	for i := 0; i < 50; i++ {
+	for i := 0; i < *Words; i++ {
 		word = corpus.Pick(word)
 		fmt.Printf("%s ", word)
 	}
