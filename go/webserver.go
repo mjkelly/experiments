@@ -1,7 +1,7 @@
-// This is a very simple webserver that serves a given direcotry with HTTP
+// This is a very simple webserver that serves a given directory with HTTP
 // digest authentication.
 //
-// I use it to serve email attachments that I want to access removelty, so the
+// I use it to serve email attachments that I want to access remotely, so the
 // serving directory is ~/attachments.
 package main
 
