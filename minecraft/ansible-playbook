@@ -1,0 +1,52 @@
+# This is a playbook to deploy a minecraft server.
+#
+# It provides tmux and a simple 'run.sh' script that starts the server. By
+# default the server is configured to use 75% of the system's memory.
+#
+# The only user configuration that should be necessary is making sure the
+# minecraft server version ('minecraft_version' variable) is up-to-date.
+#
+# Sat Dec 14 21:53:21 EST 2013
+---
+- hosts: minecraft
+  vars:
+    # This is the version of minecraft to download. Check it on:
+    # https://minecraft.net/download
+    minecraft_version: 1.7.4
+
+  remote_user: vagrant
+  sudo: yes
+  tasks:
+
+  # Initial setup
+  - name: update package list
+    apt: update_cache=yes cache_valid_time=3600
+  - name: upgrade all packages
+    apt: upgrade=safe
+
+  # Packages
+  - name: install apache
+    apt: pkg=apache2 state=latest
+  - name: ensure apache is running
+    service: name=apache2 state=started
+  - name: install tmux
+    apt: pkg=tmux state=latest
+  - name: install java
+    apt: pkg=default-jre-headless state=latest
+
+  # Set up minecraft user
+  - name: add minecraft user
+    user: name=minecraft
+
+  # Copy minecraft server and configs.
+  - name: download minecraft server
+    get_url: url="http://s3.amazonaws.com/Minecraft.Download/versions/{{minecraft_version}}/minecraft_server.{{minecraft_version}}.jar" dest="~minecraft/"
+  - name: copy scripts 
+    template: src=./run.sh.j2 dest="~minecraft/run.sh"
+  - name: ensure script permissions
+    file: path="~minecraft/run.sh" state="file" owner="minecraft" group="minecraft" mode="0755" 
+  - name: copy configuration
+    copy: src="./default-server" dest="~minecraft/"
+  - name: ensure configuration permissions
+    file: path="~minecraft/default-server" state="directory" recurse=yes owner="minecraft" group="minecraft" mode="0755" 
+

@@ -1,0 +1,10 @@
+#!/bin/bash
+#
+# Runs the minecraft server.
+#
+# TODO: Add some more logic to keep the server alive if it dies (most likely
+# OOMing), or use mark2.
+
+memory_mb="{{ (ansible_memtotal_mb * 0.75) | int }}"
+version="{{ minecraft_version }}"
+cd $HOME/default-server && java -Xmx"${memory_mb}"M -Xms"${memory_mb}"M -jar ~/minecraft_server.${version}.jar nogui
