@@ -41,11 +41,11 @@ Instructions
 
 You should be up and running with just a few steps:
 
-  host$ vagrant up
-  [the ansible step may take quite some time, as it updates all packages to their
-  latest versions]
-  $ vagrant ssh
-  vagrant@precise32:~$ sudo su minecraft
-  $ tmux new
-  $ ./run.sh
-  /whitelist add [minecraft user]
+    host$ vagrant up
+    [the ansible step may take quite some time, as it updates all packages to their
+    latest versions]
+    $ vagrant ssh
+    vagrant@precise32:~$ sudo su minecraft
+    $ tmux new
+    $ ./run.sh
+    /whitelist add [minecraft user]
