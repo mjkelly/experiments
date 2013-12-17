@@ -39,8 +39,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # backing providers for Vagrant. These expose provider-specific options.
   # Example for VirtualBox:
   config.vm.provider :virtualbox do |vb|
-    # Use VBoxManage to customize the VM. For example to change memory:
+    # 2GB RAM is reasonable for a small (5-person) minecraft server that gets
+    # restarted nightly.
     vb.customize ["modifyvm", :id, "--memory", "2048"]
+    # Give minecraft one full CPU.
+    vb.customize ["modifyvm", :id, "--cpus", "1"]
+    vb.customize ["modifyvm", :id, "--cpuexecutioncap", "100"]
   end
   # View the documentation for the provider you're using for more
   # information on available options.
