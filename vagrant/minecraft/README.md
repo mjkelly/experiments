@@ -41,11 +41,32 @@ Instructions
 
 You should be up and running with just a few steps:
 
-    host$ vagrant up
-    [the ansible step may take quite some time, as it updates all packages to their
-    latest versions]
+    host$ SSH_AUTH_SOCK= vagrant up
     $ vagrant ssh
     vagrant@precise32:~$ sudo su minecraft
+    $ cd
+
+Now you're in user `minecraft`'s home directory, which contains everything you
+need for a fresh server. The simplest way to set up the server in an
+easy-to-manage way is to put it in tmux (which is installed by default):
+
     $ tmux new
     $ ./run.sh
+
+Once the server is running, be sure to whitelist yourself if you didn't turn
+off the whitelist in `server.properties`:
+
     /whitelist add [minecraft user]
+
+Things you may need to change
+-----------------------------
+
+Minecraft version! It is currently set to **1.7.4**. You can change it in
+`ansible-playbook`.
+
+IP address of the VM! It is hardcoded to **192.168.33.10**. You can change it
+in `Vagrantfile`.
+
+Minecraft port! It is set to the default port. You can change it in
+`Vagrantfile`. Remember to update your SRV records:
+http://wiki.multiplay.co.uk/Minecraft/Hostnames

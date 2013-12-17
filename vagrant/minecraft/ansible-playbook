@@ -18,17 +18,11 @@
   sudo: yes
   tasks:
 
-  # Initial setup
+  # System setup
   - name: update package list
     apt: update_cache=yes cache_valid_time=3600
-  - name: upgrade all packages
-    apt: upgrade=safe
 
   # Packages
-  - name: install apache
-    apt: pkg=apache2 state=latest
-  - name: ensure apache is running
-    service: name=apache2 state=started
   - name: install tmux
     apt: pkg=tmux state=latest
   - name: install java
