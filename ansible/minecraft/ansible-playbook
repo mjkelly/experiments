@@ -8,7 +8,7 @@
 #
 # Sat Dec 14 21:53:21 EST 2013
 ---
-- hosts: minecraft
+- hosts: vagrant
   vars:
     # This is the version of minecraft to download. Check it on:
     # https://minecraft.net/download
