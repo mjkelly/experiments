@@ -1,0 +1,56 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:        minecraft-mark2
+# Required-Start:  $network $syslog
+# Required-Stop:   $network $syslog
+# Default-Start:   2 3 4 5
+# Default-Stop:    1
+# Short-Description: Start Minecraft server with mark2
+### END INIT INFO
+
+SERVER_DIR="/home/minecraft/default-server"
+USER="minecraft"
+
+PATH=/sbin:/bin:/usr/sbin:/usr/bin
+
+. /lib/lsb/init-functions
+
+
+MARK2="/usr/local/bin/mark2"
+SERVER_NAME=$(basename "${SERVER_DIR}")
+
+test -x $MARK2 || exit 5
+test -d "${SERVER_DIR}" || exit 5
+
+cd "$(dirname $SERVER_DIR)"
+
+case $1 in
+	start)
+		log_daemon_msg "Starting Minecraft server ${SERVER_NAME}" "mark2"
+		sudo -u "${USER}" "${MARK2}" start "${SERVER_NAME}"
+		log_end_msg $?
+  		;;
+	stop)
+		log_daemon_msg "Stopping Minecraft server ${SERVER_NAME}" "mark2"
+		sudo -u "${USER}" "${MARK2}" stop "${SERVER_NAME}"
+		log_end_msg $?
+  		;;
+	restart)
+    $0 stop
+    $0 start
+  		;;
+	status)
+    if sudo -u $USER "${MARK2}" list | grep -F "${SERVER_NAME}"; then
+      echo "${SERVER_NAME} running"
+      exit 0
+    else
+      echo "${SERVER_NAME} not running"
+      exit 1
+    fi
+		;;
+	*)
+		echo "Usage: $0 {start|stop|status}"
+		exit 2
+		;;
+esac

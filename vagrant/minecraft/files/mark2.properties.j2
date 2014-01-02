@@ -1,0 +1,6 @@
+# see resources/mark2.default.properties for details
+
+# Memory allocation pool initial size
+java.cli.X.ms={{ (ansible_memtotal_mb * 0.75) | int }}M
+# Memory allocation pool max size
+java.cli.X.mx={{ (ansible_memtotal_mb * 0.75) | int }}M
