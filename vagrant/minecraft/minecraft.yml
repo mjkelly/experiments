@@ -27,10 +27,10 @@
       apt: update_cache=yes cache_valid_time=3600
     # mark2 doesn't work without a UTF-8 locale. Just set it everywhere.
     - name: set UTF-8 locale
-      lineinfile: dest="/etc/default/locale" line="{{item}}"
+      lineinfile: dest="/etc/default/locale" regexp="^{{item}}=.*" line="{{item}}=en_US.UTF-8" state=present
       with_items:
-        - "LC_ALL=en_US.UTF-8"
-        - "LANG=en_US.UTF-8"
+        - "LC_ALL"
+        - "LANG"
 
     - name: install packages
       apt: pkg="{{item}}" state=latest
