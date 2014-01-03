@@ -50,21 +50,17 @@
 
     # Copy minecraft server and configs. This does not clobber any files that
     # already exist on the remote machine.
-    - name: create minecraft server directory
-      file: dest="{{minecraft_home}}/{{minecraft_server_name}}" state=directory owner="{{minecraft_user}}" group="{{minecraft_user}}"
     - name: copy minecraft server configuration
-      copy: src="{{minecraft_server_dir}}/{{item}}" dest="{{minecraft_home}}/{{minecraft_server_name}}/{{item}}" force=no
+      copy: src="{{minecraft_server_dir}}/" dest="{{minecraft_home}}/{{minecraft_server_name}}" force=no owner="{{minecraft_user}}" group="{{minecraft_user}}"
       notify:
         - restart minecraft
-      with_items:
-        - "server.properties"
-        - "white-list.txt"
-        - "ops.txt"
-        - "banned-ips.txt"
-        - "banned-players.txt"
-
+    # I don't understand why we need this when we set user and group on the
+    # 'copy' command above, but ansible doesn't set permissions on
+    # sub-directories.
     - name: chmod minecraft configuration
       file: path="{{minecraft_home}}/{{minecraft_server_name}}" state=directory recurse=yes owner="{{minecraft_user}}" group="{{minecraft_user}}"
+
+
     - name: download minecraft server
       get_url: url="http://s3.amazonaws.com/Minecraft.Download/versions/{{minecraft_version}}/minecraft_server.{{minecraft_version}}.jar" dest="{{minecraft_home}}/{{minecraft_server_name}}/"
 
@@ -76,19 +72,15 @@
     - name: install mark2
       command: chdir=~/mark2/ creates=/usr/local/bin/mark2 python ./setup.py install
     - name: copy mark2 config 
-      template: src="./files/mark2.properties.j2"  dest="/etc/mark2/mark2.properties"
-    - name: chmod mark2 config
-      file: path="/etc/mark2/mark2.properties" state="file" mode="0644" 
+      template: src="./files/mark2.properties.j2" dest="/etc/mark2/mark2.properties" mode=0644
     - name: install init script
-      template: src="./files/etc_init.d_minecraft-mark2"  dest="/etc/init.d/minecraft-mark2"
-    - name: chmod init script
-      file: path="/etc/init.d/minecraft-mark2" state="file" mode="0755" 
+      template: src="./files/etc_init.d_minecraft-mark2"  dest="/etc/init.d/minecraft_{{minecraft_server_name}}" mode=0755
 
 
     # Start it up!
     - name: install/start init script
-      service: name=minecraft-mark2 enabled=yes state=started
+      service: name="minecraft_{{minecraft_server_name}}" enabled=yes state=started
 
   handlers:
     - name: restart minecraft
-      service: name=minecraft-mark2 state=restarted
+      service: name="minecraft_{{minecraft_server_name}}" state=restarted
