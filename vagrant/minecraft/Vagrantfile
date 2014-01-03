@@ -53,7 +53,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     # 'inventory_file' is for ansible 1.2.x. It should be 'inventory_path' for
     # later versions of ansible.
     ansible.inventory_file = "ansible-inventory"
-    ansible.playbook = "ansible-playbook"
+    ansible.playbook = "minecraft.yml"
     ansible.sudo = true
   end
 end
