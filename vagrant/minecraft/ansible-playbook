@@ -1,10 +1,16 @@
 # This is a playbook to deploy a minecraft server.
+# 
+# We provide mark2, a simple minecraft server wrapper, which provides a simple
+# terminal-based interface. We also set up an init-script to ensure the server
+# properly starts and stops for system restarts.
 #
-# It provides tmux and a simple 'run.sh' script that starts the server. By
-# default the server is configured to use 75% of the system's memory.
-#
-# The only user configuration that should be necessary is making sure the
-# minecraft server version ('minecraft_version' variable) is up-to-date.
+# Notes:
+# - You may wish to edit the server configuration in
+#   files/default-server/server.properties. Note that by default it uses a
+#   white-list, and ops.txt is empty!
+# - We configure the server to use 75% of the system's memory. See
+#   files/mark2.properties.j2.
+# - Check that the minecraft_version variable is up-to-date.
 #
 # Thu Jan  2 16:50:41 EST 2014
 ---
@@ -18,64 +24,85 @@
     # applicable.
     minecraft_server_dir: ./files/default-server
     # Name for the server in minecraft_server_dir -- this will determine its
-    # remote location in the minecraft user's home directory, and therefore the
-    # name by which mark2 refers to it.
+    # remote location in the minecraft user's home directory (it will be in
+    # {{mineraft_home}}/{{minecraft_server_name}}), and therefore the name by
+    # which mark2 refers to it.
     minecraft_server_name: default-server
     # Name of the user we create to run the server.
     minecraft_user: minecraft
+    minecraft_home: /home/minecraft
 
   remote_user: vagrant
   sudo: yes
   tasks:
 
-  # System setup
-  - name: update package list
-    apt: update_cache=yes cache_valid_time=3600
-  # mark2 doesn't work without a UTF-8 locale. Just set it everywhere.
-  - name: set UTF-8 locale
-    lineinfile: dest="/etc/default/locale" line="{{item}}"
-    with_items:
-      - LC_ALL=en_US.UTF-8
-      - LANG=en_US.UTF-8
+    # System setup
+    - name: update package list
+      apt: update_cache=yes cache_valid_time=3600
+    # mark2 doesn't work without a UTF-8 locale. Just set it everywhere.
+    - name: set UTF-8 locale
+      lineinfile: dest="/etc/default/locale" line="{{item}}"
+      with_items:
+        - "LC_ALL=en_US.UTF-8"
+        - "LANG=en_US.UTF-8"
 
-  - name: install packages
-    apt: pkg={{ item }} state=latest
-    with_items:
-      # minecraft server
-      - default-jre-headless
-      # so we can clone the mark2 repo
-      - git
-      # deps for pip (for mark2)
-      - python-dev
-      - python-pip
+    - name: install packages
+      apt: pkg="{{item}}" state=latest
+      with_items:
+        # minecraft server
+        - default-jre-headless
+        # so we can clone the mark2 repo
+        - git
+        # deps for pip (for mark2)
+        - python-dev
+        - python-pip
 
-  # Set up minecraft user
-  # TODO: Add some ssh keys for the minecraft user so we can log in directly.
-  - name: add minecraft user
-    user: name="{{minecraft_user}}" shell=/bin/bash
+    # Set up minecraft user.
+    # TODO: Set up SSH keys for this user.
+    - name: add minecraft user
+      user: name="{{minecraft_user}}" shell=/bin/bash home="{{minecraft_home}}"
 
-  # Copy minecraft server and configs.
-  - name: copy minecraft configuration
-    copy: src="{{minecraft_server_dir}}/" dest="~{{minecraft_user}}/{{minecraft_server_name}}"
-  - name: chmod minecraft configuration
-    file: path="~{{minecraft_user}}/{{minecraft_server_name}}" state="directory" recurse=yes owner="{{minecraft_user}}" group="{{minecraft_user}}"
-  - name: download minecraft server
-    get_url: url="http://s3.amazonaws.com/Minecraft.Download/versions/{{minecraft_version}}/minecraft_server.{{minecraft_version}}.jar" dest="~{{minecraft_user}}/{{minecraft_server_name}}/"
+    # Copy minecraft server and configs. This does not clobber any files that
+    # already exist on the remote machine.
+    - name: create minecraft server directory
+      file: dest="{{minecraft_home}}/{{minecraft_server_name}}" state=directory owner="{{minecraft_user}}" group="{{minecraft_user}}"
+    - name: copy minecraft server configuration
+      copy: src="{{minecraft_server_dir}}/{{item}}" dest="{{minecraft_home}}/{{minecraft_server_name}}/{{item}}" force=no
+      notify:
+        - restart minecraft
+      with_items:
+        - "server.properties"
+        - "white-list.txt"
+        - "ops.txt"
+        - "banned-ips.txt"
+        - "banned-players.txt"
 
-  # Install mark2
-  - name: download mark2
-    git: repo=https://github.com/mcdevs/mark2.git dest=~/mark2
-  - name: install mark2 requirements
-    pip: requirements=~/mark2/requirements.txt
-  - name: install mark2
-    command: chdir=~/mark2/ creates=/usr/local/bin/mark2 python ./setup.py install
-  - name: copy mark2 config 
-    template: src="./files/mark2.properties.j2"  dest="/etc/mark2/mark2.properties"
-  - name: chmod mark2 config
-    file: path="/etc/mark2/mark2.properties" state="file" mode="0644" 
-  - name: install init script
-    template: src="./files/etc_init.d_minecraft-mark2"  dest="/etc/init.d/minecraft-mark2"
+    - name: chmod minecraft configuration
+      file: path="{{minecraft_home}}/{{minecraft_server_name}}" state=directory recurse=yes owner="{{minecraft_user}}" group="{{minecraft_user}}"
+    - name: download minecraft server
+      get_url: url="http://s3.amazonaws.com/Minecraft.Download/versions/{{minecraft_version}}/minecraft_server.{{minecraft_version}}.jar" dest="{{minecraft_home}}/{{minecraft_server_name}}/"
 
-  # Start it up!
-  - name: start server
-    service: name=minecraft-mark2 state=started
+    # Install mark2
+    - name: download mark2
+      git: repo=https://github.com/mcdevs/mark2.git dest=~/mark2
+    - name: install mark2 requirements
+      pip: requirements=~/mark2/requirements.txt
+    - name: install mark2
+      command: chdir=~/mark2/ creates=/usr/local/bin/mark2 python ./setup.py install
+    - name: copy mark2 config 
+      template: src="./files/mark2.properties.j2"  dest="/etc/mark2/mark2.properties"
+    - name: chmod mark2 config
+      file: path="/etc/mark2/mark2.properties" state="file" mode="0644" 
+    - name: install init script
+      template: src="./files/etc_init.d_minecraft-mark2"  dest="/etc/init.d/minecraft-mark2"
+    - name: chmod init script
+      file: path="/etc/init.d/minecraft-mark2" state="file" mode="0755" 
+
+
+    # Start it up!
+    - name: start server
+      service: name=minecraft-mark2 state=started
+
+  handlers:
+    - name: restart minecraft
+      service: name=minecraft-mark2 state=restarted
