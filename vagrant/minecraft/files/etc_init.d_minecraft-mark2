@@ -9,7 +9,7 @@
 # Short-Description: Start Minecraft server with mark2
 ### END INIT INFO
 
-SERVER_DIR="/home/minecraft/default-server"
+SERVER_DIR="{{minecraft_home}}/{{minecraft_server_name}}"
 USER="minecraft"
 
 PATH=/sbin:/bin:/usr/sbin:/usr/bin
