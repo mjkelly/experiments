@@ -86,8 +86,8 @@
 
 
     # Start it up!
-    - name: start server
-      service: name=minecraft-mark2 state=started
+    - name: install/start init script
+      service: name=minecraft-mark2 enabled=yes state=started
 
   handlers:
     - name: restart minecraft
