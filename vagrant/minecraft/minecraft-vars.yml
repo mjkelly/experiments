@@ -1,0 +1,18 @@
+---
+# This is the version of minecraft to download. Check it on:
+# https://minecraft.net/download
+minecraft_version: 1.7.4
+# Where on local disk to find the default server -- this directory should
+# contain server.properties, and optionally white-list.txt and ops.txt, if
+# applicable.
+minecraft_server_dir: ./files/default-server
+
+# Name for the server in minecraft_server_dir -- this will determine its
+# remote location in the minecraft user's home directory (it will be in
+# {{mineraft_home}}/{{minecraft_server_name}}), and therefore the name by
+# which mark2 refers to it.
+minecraft_server_name: "{{minecraft_server_dir | basename}}"
+
+# Name of the user we create to run the server.
+minecraft_user: minecraft
+minecraft_home: /home/minecraft
