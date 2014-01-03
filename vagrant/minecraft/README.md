@@ -1,15 +1,17 @@
 Vagrant+Ansible Configs for Minecraft Server
 ============================================
 
-This directory contains `Vagrantfile` (for Vagrant, http://vagrantup.com) and
+This directory contains `Vagrantfile` (for Vagrant, http://vagrantup.com) and 
 `ansible-playbook` (for Ansible, http://ansibleworks.com) which set up a
 virtual machine to run Minecraft.
 
 When finished, you should have a `minecraft` user whose home directory
-contains everything you need to start running a minecraft server. If you want
-to start a brand new server, all you should need to do is call `./run.sh` to
-start the server and whitelist your user. (`/whitelist add <username>` on the
-minecraft server console.)
+contains a minecraft server directory. The server should be running under mark2
+(https://github.com/mcdevs/mark2), though note that unless you edited the 
+`white-list.txt` under `files/default-server`, you must add users to the 
+whitelist before anyone can join.
+
+
 
 DISCLAIMER
 ----------
@@ -19,8 +21,11 @@ machine.)
 
 These are designed for the versions of Vagrant and Ansible available on Debian
 testing (jessie): Vagrant v1.2.2 and Ansible v1.4.4. **These are actually
-rather old.** There are notes about changes I *know* are necessary for
-running with newer versions.
+rather old.**
+
+Changes I'm aware of for running with newer versions:
+
+  * New versions of the Ansible plugin for Vagrant use `inventory_path` instead of `inventory_file`. Update the reference in Vagrantfile.
 
 Implementation Info
 -------------------
@@ -39,34 +44,27 @@ want. **The server allows only whitelisted users by default.**
 Instructions
 ------------
 
-You should be up and running with just a few steps:
+Edit `files/default-server/white-list.txt` to include your minecraft username.
+Otherwise you will not be able to join the server.
 
-    host$ SSH_AUTH_SOCK= vagrant up
-    $ vagrant ssh
-    vagrant@precise32:~$ sudo su minecraft
-    $ cd
+See "Options" below for configuration options you may want to set. If you're satisfied with setting up a fresh throwaway server, just continue.
 
-Now you're in user `minecraft`'s home directory, which contains everything you
-need for a fresh server. The simplest way to set up the server in an
-easy-to-manage way is to put it in tmux (which is installed by default):
+All you have to do now is type `vagrant up`. Type `SSH_AUTH_SOCK= vagrant up` if you're running an ssh-agent, so your agent doesn't confuse ansible when it tries to ssh in. 
 
-    $ tmux new
-    $ ./run.sh
+If you want to use an existing server, put your server directory somewhere on
+your local machine, and set `minecraft_server_path` to the path to the server
+directory.
 
-Once the server is running, be sure to whitelist yourself if you didn't turn
-off the whitelist in `server.properties`:
 
-    /whitelist add [minecraft user]
+Options
+-------
 
-Things you may need to change
------------------------------
+There are configuration values in `minecraft-vars.yml` that you may want to change.
 
-Minecraft version! It is currently set to **1.7.4**. You can change it in
-`ansible-playbook`.
 
-IP address of the VM! It is hardcoded to **192.168.33.10**. You can change it
-in `Vagrantfile`.
+IP address of the VM is hardcoded to **192.168.33.10**. You can change it
+in `Vagrantfile`. If you change it there, you must update it in `ansible-playbook` as well.
 
-Minecraft port! It is set to the default port. You can change it in
-`Vagrantfile`. Remember to update your SRV records:
-http://wiki.multiplay.co.uk/Minecraft/Hostnames
+To change the port the server runs on, you must update the minecraft port in both `files/default-server/server.properties` (to change the port the server listens on) and `Vagrantfile` (to change the port forwarding from the host machine).
+
+TODO: Make it easier to change the minecraft server port.
