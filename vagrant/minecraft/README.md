@@ -68,3 +68,8 @@ in `Vagrantfile`. If you change it there, you must update it in `ansible-playboo
 To change the port the server runs on, you must update the minecraft port in both `files/default-server/server.properties` (to change the port the server listens on) and `Vagrantfile` (to change the port forwarding from the host machine).
 
 TODO: Make it easier to change the minecraft server port.
+
+If you use the default server, it comes with a `scripts.txt` for the mark2
+scripts plugin, which triggers a few automated actions: It restarts the server
+every 6 hours (to keep memory usage under control), and explicitly saves the
+map every 5 minutes.
