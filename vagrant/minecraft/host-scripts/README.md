@@ -3,7 +3,7 @@ Host Scripts
 
 These are scripts you can use on the host machine.
 
-minecraft-bak.sh
+server-backup.sh
 ----------------
 This script copies the contents of the `~minecraft` directory to the local
 machine. It should work without modification.
