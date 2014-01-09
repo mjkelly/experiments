@@ -1,0 +1,42 @@
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:		minecraft-vm
+# Required-Start:	$remote_fs $syslog
+# Required-Stop:	$remote_fs $syslog
+# Default-Start:	2 3 4 5
+# Default-Stop:		0 1 6
+# Short-Description:	start and stop a single Minecraft VM
+### END INIT INFO
+
+set -e
+
+# /etc/init.d/minecraft-vm: start and stop a single Minecraft VM
+user='mkelly'
+vm_id='2571a928-f35e-43d1-a693-63dfce732310'
+
+vboxmanage='/usr/bin/VBoxManage'
+test -x "${vboxmanage}" || exit 1
+
+. /lib/lsb/init-functions
+
+
+export PATH="${PATH:+$PATH:}/usr/sbin:/sbin"
+
+case "$1" in
+  start)
+	sudo -u "${user}" $vboxmanage startvm "${vm_id}" --type headless
+	;;
+  stop)
+	sudo -u "${user}" $vboxmanage controlvm "${vm_id}" savestate
+	;;
+  status)
+	sudo -u "${user}" $vboxmanage showvminfo "${vm_id}" | grep ^State:
+	;;
+
+  *)
+	log_action_msg "Usage: /etc/init.d/minecraft-vm {start|stop|status}" || true
+	exit 1
+esac
+
+exit 0
