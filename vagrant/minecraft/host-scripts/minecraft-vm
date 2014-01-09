@@ -12,8 +12,8 @@
 set -e
 
 # /etc/init.d/minecraft-vm: start and stop a single Minecraft VM
-user='mkelly'
-vm_id='2571a928-f35e-43d1-a693-63dfce732310'
+user='TODO'
+vm_id='TODO'
 
 vboxmanage='/usr/bin/VBoxManage'
 test -x "${vboxmanage}" || exit 1
