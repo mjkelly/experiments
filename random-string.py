@@ -28,13 +28,20 @@ parser.add_argument('--quiet', default=False, action='store_true',
                     help='Suppress unnecessary output.')
 parser.add_argument('--alphanum', default=False, action='store_true',
                     help='Only generate strings from alphanumeric characters. '
-                         'Mutually exclusive with --loweralphanum.')
+                         'Mutually exclusive with --loweralphanum, --numeric.')
 parser.add_argument('--loweralphanum', default=False, action='store_true',
                     help='Only generate strings from lowercase alphanumeric characters. '
-                         'Mutually exclusive with --alphanum.')
+                         'Mutually exclusive with --alphanum, --numeric.')
+parser.add_argument('--numeric', default=False, action='store_true',
+                    help='Only generate strings from numbers. '
+                         'Mutually exclusive with --alphanum, --loweralphanum.')
 parser.add_argument('length', default=16, nargs='?', type=int,
                     help='Number of characters in password.')
 args = parser.parse_args()
+
+chars_numeric = list(
+  '0123456789'
+)
 
 chars_loweralpha = list(
   'abcdefghijklmnopqrstuvwxyz'
@@ -63,6 +70,8 @@ if args.loweralphanum:
   chars = chars_loweralpha
 elif args.alphanum:
   chars = chars_loweralpha + chars_upperalpha
+if args.numeric:
+  chars = chars_numeric
 else:
   chars = chars_loweralpha + chars_upperalpha + chars_symbols
 
