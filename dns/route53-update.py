@@ -29,7 +29,8 @@ parser.add_option('--amz-key-id', dest='key_id',
 parser.add_option('--amz-key-secret', dest='key_secret',
                   help='Amazon API key secet value. Required.')
 parser.add_option('--domain', dest='domain',
-                  help='Domain name to update, ending with a dot. Required.')
+                  help='Domain name to update (ending with a dot), or "auto" to '
+                       'use the current hostname. Required.')
 parser.add_option('--zone-id', dest='zone_id',
                   help='Amazon zone ID containing domain name. Required.')
 parser.add_option('--ip', dest='ip', help='New IPv4 for domain name, or '
@@ -218,21 +219,25 @@ if (not opts.key_id or not opts.key_secret or not opts.domain or
 if opts.quiet and opts.verbose:
   print >>sys.stderr, '--quiet and --verbose are mutually exclusive.'
   usage()
-if not opts.domain.endswith('.'):
-  print >>sys.stderr, '--domain should be fully-qualified, and end with a dot.'
-  usage()
 
 time_str, default_iface_ip = get_time_and_ip()
 key_id = opts.key_id
 secret = opts.key_secret
 zone_id = opts.zone_id
-domain = opts.domain
+if opts.domain == "auto":
+  domain = socket.gethostname() + '.'
+else:
+  domain = opts.domain
 if opts.ip == "auto":
   new_ip = default_iface_ip
 else:
   new_ip = opts.ip
 
-vlog('Will set %s to %s' % (domain, new_ip))
+if not domain.endswith('.'):
+  print >>sys.stderr, '--domain should be fully-qualified, and end with a dot.'
+  usage()
+
+vlog('Will set %r to %r' % (domain, new_ip))
 
 auth = make_auth(time_str, key_id, secret)
 headers = {
