@@ -20,6 +20,7 @@ import hashlib
 import hmac
 import httplib
 import optparse
+import socket
 import sys
 
 parser = optparse.OptionParser()
@@ -46,6 +47,48 @@ parser.add_option('--force', '-f', dest='force', default=False,
 opts, _ = parser.parse_args()
 
 AMAZON_NS = 'https://route53.amazonaws.com/doc/2012-02-29/'
+
+COMMENT_FORMAT = 'Automatic update from route53-update.py running on {hostname} at {time}'
+
+# Format string for updating an A record, {name}, from {old_value} with
+# {old_ttl} to {new_value} with {new_ttl}.
+# See:
+# http://docs.amazonwebservices.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html
+BODY_FORMAT = """<?xml version="1.0" encoding="UTF-8"?>
+<ChangeResourceRecordSetsRequest xmlns="https://route53.amazonaws.com/doc/2012-02-29/">
+   <ChangeBatch>
+      <Comment>{comment}</Comment>
+      <Changes>
+         <Change>
+            <Action>DELETE</Action>
+            <ResourceRecordSet>
+               <Name>{name}</Name>
+               <Type>A</Type>
+               <TTL>{old_ttl}</TTL>
+               <ResourceRecords>
+                  <ResourceRecord>
+                     <Value>{old_value}</Value>
+                  </ResourceRecord>
+               </ResourceRecords>
+            </ResourceRecordSet>
+         </Change>
+         <Change>
+            <Action>CREATE</Action>
+            <ResourceRecordSet>
+               <Name>{name}</Name>
+               <Type>A</Type>
+               <TTL>{new_ttl}</TTL>
+               <ResourceRecords>
+                  <ResourceRecord>
+                     <Value>{new_value}</Value>
+                  </ResourceRecord>
+               </ResourceRecords>
+            </ResourceRecordSet>
+         </Change>
+      </Changes>
+   </ChangeBatch>
+</ChangeResourceRecordSetsRequest>
+"""
 
 def usage():
   parser.print_help()
@@ -140,45 +183,30 @@ def get_old_record_values(doc, name):
 
   raise ValueError('Could not find existing A record for %s' % name)
 
-# Format string for updating an A record, {name}, from {old_value} with
-# {old_ttl} to {new_value} with {new_ttl}.
-# See:
-# http://docs.amazonwebservices.com/Route53/latest/APIReference/API_ChangeResourceRecordSets.html
-body = """<?xml version="1.0" encoding="UTF-8"?>
-<ChangeResourceRecordSetsRequest xmlns="https://route53.amazonaws.com/doc/2012-02-29/">
-   <ChangeBatch>
-      <Comment>Automatic hostname update from route53-update.py.</Comment>
-      <Changes>
-         <Change>
-            <Action>DELETE</Action>
-            <ResourceRecordSet>
-               <Name>{name}</Name>
-               <Type>A</Type>
-               <TTL>{old_ttl}</TTL>
-               <ResourceRecords>
-                  <ResourceRecord>
-                     <Value>{old_value}</Value>
-                  </ResourceRecord>
-               </ResourceRecords>
-            </ResourceRecordSet>
-         </Change>
-         <Change>
-            <Action>CREATE</Action>
-            <ResourceRecordSet>
-               <Name>{name}</Name>
-               <Type>A</Type>
-               <TTL>{new_ttl}</TTL>
-               <ResourceRecords>
-                  <ResourceRecord>
-                     <Value>{new_value}</Value>
-                  </ResourceRecord>
-               </ResourceRecords>
-            </ResourceRecordSet>
-         </Change>
-      </Changes>
-   </ChangeBatch>
-</ChangeResourceRecordSetsRequest>
-"""
+def find_comment_in_response(response, required_comment):
+  """Checks for a PENDING or INSYNC ChangeResponse with the given comment.
+
+  Args:
+    response: XML ChangeResourceRecordSetsResponse, as a string.
+    required_comment: Comment string to look for.
+
+  Returns:
+    The ElementTree.Element the ChangeInfo with required_comment, or None if
+    not found.
+  """
+  root = ElementTree.fromstring(response)
+  info_path = './ChangeInfo'
+  for node in root.findall(qualify_path(info_path)):
+    comment = node.find(qualify_path('./Comment'))
+    status = node.find(qualify_path('./Status'))
+    if comment.text != required_comment:
+      continue
+    if status.text  not in ('PENDING', 'INSYNC'):
+      vlog('Found unexpected status = %r' % status.text)
+      return None
+    return node
+  vlog('Found no response for comment %r' % required_comment)
+  return None
 
 # ========== main ==========
 
@@ -235,17 +263,25 @@ else:
   log('Updating %s to %s (was %s)' % (domain, new_ip, old_ip))
 
 connection = httplib.HTTPSConnection('route53.amazonaws.com')
-change_body = body.format(name=domain,
-                          old_value=old_ip,
-                          old_ttl=old_ttl,
-                          new_value=new_ip,
-                          new_ttl=old_ttl)
+comment_str = COMMENT_FORMAT.format(hostname=socket.gethostname(),
+                                    time=time_str)
+change_body = BODY_FORMAT.format(comment=comment_str,
+                                 name=domain,
+                                 old_value=old_ip,
+                                 old_ttl=old_ttl,
+                                 new_value=new_ip,
+                                 new_ttl=old_ttl)
 vlog('POST %s\n%s' % (change_rrset_path, change_body))
 
 connection.request('POST', change_rrset_path, change_body, headers)
 response = connection.getresponse()
-vlog('Response:\n%s' % response.read())
+response_val = response.read()
+vlog('Response:\n%s' % response_val)
 
 if response.status != httplib.OK:
   raise RuntimeError('Address update returned non-OK repsonse: %s (not %s)' % (
       response.status, httplib.OK))
+if find_comment_in_response(response_val, comment_str) is None:
+  raise RuntimeError(
+    'Did not receive correct change response from Route 53. Response: %s',
+    response_val)
