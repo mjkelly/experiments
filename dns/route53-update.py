@@ -182,7 +182,7 @@ def get_old_record_values(doc, name):
         rec_type, rec_name, rec_ttl, rec_value))
     return rec_value, rec_ttl
 
-  raise ValueError('Could not find existing A record for %s' % name)
+  raise ValueError('Could not find existing A record for %r in:\n%s' % (name, doc))
 
 def find_comment_in_response(response, required_comment):
   """Checks for a PENDING or INSYNC ChangeResponse with the given comment.
