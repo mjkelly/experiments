@@ -70,7 +70,7 @@ if args.loweralphanum:
   chars = chars_loweralpha
 elif args.alphanum:
   chars = chars_loweralpha + chars_upperalpha
-if args.numeric:
+elif args.numeric:
   chars = chars_numeric
 else:
   chars = chars_loweralpha + chars_upperalpha + chars_symbols
