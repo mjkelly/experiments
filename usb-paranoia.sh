@@ -18,7 +18,7 @@
 # ignored if they don't match any existing devices, and lines starting with "#"
 # will never match the output of lsusb(1).)
 #
-# This script was inspiring by an epic prank in which one of my coworkers
+# This script was inspired by an epic prank in which one of my coworkers
 # surreptitiously added a new keyboard and mouse to another coworker's machine,
 # and very occasionally moved the mouse or typed a single letter. (This script
 # still relies on a file can be changed, but it raises the bar.)
