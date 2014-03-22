@@ -111,7 +111,7 @@ failure_lines=${failure_lines:-0}
 # We check for strictly > failure_threshold because one line will be the last
 # 'SUCCESS' message.
 if [[ "$failure_lines" -gt "$failure_threshold" ]]; then
-  if [[ "$failure_lines" -lt "$failure_max" ]]; then
+  if [[ "$failure_lines" -le "$failure_max" ]]; then
     cycle_network "$dry_run"
   else
     syslog "Too many restarts to cycle power ($failure_lines lines in log)"
