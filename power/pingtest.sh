@@ -49,36 +49,36 @@ failure_max=7
 # script to control power. (apcms-powerctl.sh controls power outlets on an APC
 # MasterSwitch via SNMP.)
 cycle_power() {
-	~/power/apcms-powerctl.sh 8 reboot
+  ~/power/apcms-powerctl.sh 8 reboot
 }
 # -----------------------------------------------------------------
 
 hist_file="$HOME/.pingtest-hist"
 
 if [ "$1" = "-n" ]; then
-	dry_run='dry'
+  dry_run='dry'
 else
-	dry_run=''
+  dry_run=''
 fi
 
 
 syslog() {
-	logger "pingtest: $1"
+  logger "pingtest: $1"
 }
 
 cycle_network() {
-	if [[ "$1" == "dry" ]]; then
-		syslog "Would restart network connection here, but dry run mode is on."
-	else
-		syslog "RESTARTING NETWORK CONNECTION"
-		cycle_power
-	fi
+  if [[ "$1" == "dry" ]]; then
+    syslog "Would restart network connection here, but dry run mode is on."
+  else
+    syslog "RESTARTING NETWORK CONNECTION"
+    cycle_power
+  fi
 }
 
 # Make sure the network is functional by testing an internal address.
 ping -q -c 3 -w 10 "$local_ip" >/dev/null
 if [[ "$?" != "0" ]]; then
-	syslog "local IP address $local_ip isn't available; skipping test"
+  syslog "local IP address $local_ip isn't available; skipping test"
   echo "SKIPPED $test_ip @ $(date)" > "$hist_file"
   exit 0
 fi
@@ -89,20 +89,20 @@ count=1
 max_count=5
 ping_success=0
 while [[ "$count" -le "$max_count" ]]; do
-	ping -q -c 1 -w 10 "$test_ip" >/dev/null
+  ping -q -c 1 -w 10 "$test_ip" >/dev/null
 
-	if [[ "$?" == "0" ]]; then
+  if [[ "$?" == "0" ]]; then
     ping_success=1
     break
-	fi
-	count="$(($count + 1))"
+  fi
+  count="$(($count + 1))"
 done
 
 if [[ "$ping_success" == 1 ]]; then
-	syslog "success for $test_ip"
+  syslog "success for $test_ip"
   echo "SUCCESS $test_ip @ $(date)" > "$hist_file"
 else
-	syslog "failed for $test_ip"
+  syslog "failed for $test_ip"
   echo "FAIL $test_ip @ $(date)" >> "$hist_file"
 fi
 
