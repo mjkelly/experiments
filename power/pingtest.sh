@@ -32,7 +32,7 @@
 # IP address outside the component you're testing. (E.g., if your power control
 # script is hooked up to your router, this should be a reliable IP address
 # external to your local network.)
-test_ip='8.8.8.1'
+test_ip='8.8.8.8'
 # An IP address inside your network. If this is not reachable, we will not test
 # the test IP and not register a failure. Default expression attempts to use
 # the default gateway. It should be a fine value as long as it works.
