@@ -25,7 +25,7 @@
 # INSTRUCTIONS:
 # - The MasterSwitch must be on your network, and have R/W SNMP access enabled.
 # - You must fill in the MasterSwitch's IP address, and the name of its R/W
-#   SNMP community below. (These are marke
+#   SNMP community below.
 #
 # -----------------------------------------------------------------
 # CONFIGURATION:
