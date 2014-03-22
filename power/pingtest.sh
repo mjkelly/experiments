@@ -41,6 +41,10 @@ local_ip="$(ip -4 route show 0/0 | awk '{print $3}')"
 # value combined with how often you are running this script to determine
 # detection speed, and how frequently you may repeatedly cycle power.)
 failure_threshold=2
+# Maximum number of failures before giving up. After there have been this many
+# total failures, we take no more action. Total actions taken is
+# failure_max - failure_threshold.
+failure_max=7
 # This function does the actual power cycling. Edit this if you have your own
 # script to control power. (apcms-powerctl.sh controls power outlets on an APC
 # MasterSwitch via SNMP.)
@@ -102,9 +106,15 @@ else
   echo "FAIL $test_ip @ $(date)" >> "$hist_file"
 fi
 
-lines="$(wc -l $hist_file | awk '{ print $1 }')"
+failure_lines="$(wc -l $hist_file | awk '{ print $1 }')"
+failure_lines=${failure_lines:-0}
 # We check for strictly > failure_threshold because one line will be the last
 # 'SUCCESS' message.
-if [[ "$lines" > "$failure_threshold" ]]; then
-  cycle_network "$dry_run"
+if [[ "$failure_lines" -gt "$failure_threshold" ]]; then
+  if [[ "$failure_lines" -lt "$failure_max" ]]; then
+    cycle_network "$dry_run"
+  else
+    syslog "Too many restarts to cycle power ($failure_lines lines in log)"
+    exit 1
+  fi
 fi
