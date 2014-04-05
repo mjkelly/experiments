@@ -22,20 +22,21 @@ Installation
 The config is mostly ready to go, but you must add info about your relay host,
 and you must fill out your hostname for the redirection rules.
 
-   * Edit `relayhost' in `main.cf'; set it to your actual relay host.
-   * Create `/etc/postfix/relay_password'. The format is this:
+   * Edit `relayhost` in `main.cf`; set it to your actual relay host.
+   * Create `/etc/postfix/relay_password`. The format is this:
      `relayhost:port username:password'
      Mind the permissions of this file when you create it.
-   * Create /etc/postfix/virtual, enter your rewriting rules. See
+   * Create `/etc/postfix/virtual`, enter your rewriting rules. See
      http://www.postfix.org/VIRTUAL_README.html for documentation on the
      format. Set this to something like:
-     `@$HOSTNAME destination@email.address'
-     Where you fill out `$HOSTNAME' and your destination email address.
-   * Copy `main.cf' to `/etc/postfix'.
-   * Run `postmap /etc/postfix/relay_password' and `postmap
-     /etc/postfix/virtual' to generate DB files postfix can use.
+     `@$HOSTNAME destination@email.address`
+     Where you fill out `$HOSTNAME` and your destination email address.
+   * Copy `main.cf` to `/etc/postfix`.
+   * Run `postmap /etc/postfix/relay_password` and
+     `postmap /etc/postfix/virtual` to generate DB files postfix can use.
+   * Restart postfix with something like `service postfix restart`.
 
-These instructions blithely assume you have a standard `master.cf' file already
+These instructions blithely assume you have a standard `master.cf` file already
 in /etc/postfix. I've used this with the master.cf files from Debian Testing
 from April 2014, and CentOS 6.
 
