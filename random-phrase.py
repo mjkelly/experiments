@@ -31,7 +31,7 @@ with open(dictionary, 'r') as fh:
   for line in fh.readlines():
     total_word_count += 1
     line = line.strip()
-    if len(line) > 3 and not line.endswith("'s"):
+    if len(line) > 2:
       try:
         line.encode('ascii')
       except UnicodeEncodeError:
