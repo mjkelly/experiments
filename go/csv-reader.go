@@ -13,6 +13,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"regexp"
 	"strings"
 )
 
@@ -47,6 +48,19 @@ func matches(query map[string]string, data map[string]string) bool {
 	return true
 }
 
+func regexpMatches(query map[string]*regexp.Regexp, data map[string]string) bool {
+	for key, queryRegexp := range query {
+		dataValue, ok := data[key]
+		if !ok {
+			return false
+		}
+		if !queryRegexp.MatchString(dataValue) {
+			return false
+		}
+	}
+	return true
+}
+
 // parseQuery parses the 'query' arguments, which are a list of key=value
 // strings.
 func parseQuery(query []string) (map[string]string, error) {
@@ -57,6 +71,20 @@ func parseQuery(query []string) (map[string]string, error) {
 			return nil, fmt.Errorf("each query argument must be of form \"key=value\"")
 		}
 		queryMap[split[0]] = split[1]
+	}
+	return queryMap, nil
+}
+
+// parseRegexpQuery parses the 'query' arguments, which are a list of key=value
+// strings, where the value portion is interpreted as a regexp.
+func parseRegexpQuery(query []string) (map[string]*regexp.Regexp, error) {
+	queryMap := make(map[string]*regexp.Regexp)
+	for _, kv := range query {
+		split := strings.SplitN(kv, "=", 2)
+		if len(split) != 2 {
+			return nil, fmt.Errorf("each query argument must be of form \"key=value\"")
+		}
+		queryMap[split[0]] = regexp.MustCompile(split[1])
 	}
 	return queryMap, nil
 }
@@ -85,6 +113,7 @@ func usage() {
 
 func main() {
 	outputFlag := flag.String("output", "", "Columns to output.")
+	regexpFlag := flag.Bool("regexp", false, "Whether to match queries as regexp.")
 	flag.Parse()
 
 	var outputColumns []string
@@ -94,6 +123,7 @@ func main() {
 	}
 
 	query := make(map[string]string)
+	regexpQuery := make(map[string]*regexp.Regexp)
 	var err error
 	argv := flag.Args()
 	if len(argv) < 1 {
@@ -101,7 +131,11 @@ func main() {
 		usage()
 	}
 	if len(argv) > 1 {
-		query, err = parseQuery(argv[1:])
+		if *regexpFlag {
+			regexpQuery, err = parseRegexpQuery(argv[1:])
+		} else {
+			query, err = parseQuery(argv[1:])
+		}
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -134,9 +168,16 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		if matches(query, kv) {
-			matchCount += 1
-			fmt.Printf("Match %d: %q\n", matchCount, filterFields(outputColumns, kv))
+		if *regexpFlag {
+			if regexpMatches(regexpQuery, kv) {
+				matchCount += 1
+				fmt.Printf("Match %d: %q\n", matchCount, filterFields(outputColumns, kv))
+			}
+		} else {
+			if matches(query, kv) {
+				matchCount += 1
+				fmt.Printf("Match %d: %q\n", matchCount, filterFields(outputColumns, kv))
+			}
 		}
 	}
 }
