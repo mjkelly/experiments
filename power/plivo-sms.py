@@ -18,12 +18,12 @@ import plivo
 text = sys.argv[1]
 
 # Your PLIVO_AUTH_ID and PLIVO_AUTH_TOKEN can be found on your Plivo Dashboard https://manage.plivo.com/dashboard
-PLIVO_AUTH_ID = '$FILLMEIN'
-PLIVO_AUTH_TOKEN = '$FILLMEIN'
+PLIVO_AUTH_ID = 'ADDME'
+PLIVO_AUTH_TOKEN = 'ADDME'
 # Enter your Plivo phone number. This will show up on your caller ID
-plivo_number = '$FILLMEIN'
+plivo_number = 'ADDME'
 # Enter the phone number that you would like to receive your SMS
-destination_number = '$FILLMEIN' # google voice
+destination_number = 'ADDME' # google voice
 
 message_params = {
     'src': plivo_number,
