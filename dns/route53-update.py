@@ -22,6 +22,7 @@ import httplib
 import optparse
 import socket
 import sys
+import syslog
 
 parser = optparse.OptionParser()
 parser.add_option('--amz-key-id', dest='key_id',
@@ -45,6 +46,9 @@ parser.add_option('--verbose', '-v', dest='verbose', default=False,
 parser.add_option('--force', '-f', dest='force', default=False,
                   action="store_true",
                   help="Update the A record even if it has not changed.")
+parser.add_option('--syslog', '-s', dest='syslog', default=False,
+                  action="store_true",
+                  help="Send output to syslog")
 opts, _ = parser.parse_args()
 
 AMAZON_NS = 'https://route53.amazonaws.com/doc/2012-02-29/'
@@ -96,14 +100,20 @@ def usage():
   sys.exit(2)
 
 def log(msg):
-  """Print unless we're in quiet mode."""
+  """Print unless we're in quiet mode.
+
+  If syslog is enabled, print to standard out only if it is tty.
+  """
   if not opts.quiet:
-    print msg
+    if opts.syslog:
+      syslog.syslog(syslog.LOG_NOTICE, msg)
+    if not opts.syslog or sys.stdout.isatty():
+      print msg
 
 def vlog(msg):
   """Print if we're in verbose mode."""
   if opts.verbose:
-    print msg
+    log(msg)
 
 def get_time_and_ip():
   """Gets the current time from amazon servers.
@@ -210,6 +220,9 @@ def find_comment_in_response(response, required_comment):
   return None
 
 # ========== main ==========
+
+if opts.syslog:
+  syslog.openlog('route53-update')
 
 if (not opts.key_id or not opts.key_secret or not opts.domain or
     not opts.zone_id or not opts.ip):
