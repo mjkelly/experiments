@@ -19,10 +19,12 @@
 #   $ synchro.py --synchronous_name longproc --nonblocking --timeout=5 -- long_proc -x -y
 
 import argparse
+import datetime
 import fcntl
 import os
 import subprocess
 import sys
+import syslog
 import threading
 
 
@@ -44,6 +46,8 @@ parser.add_argument('--synchronization_dir',
         '--synchronous_name')
 parser.add_argument('--verbose', '-v', default=False, action='store_true',
         help='Print verbose log messages to stderr.')
+parser.add_argument('--syslog', default=False, action='store_true',
+        help='If --verbose, log to syslog instead of stderr.')
 parser.add_argument('--kill_timeout', type=float, default=1.0,
         help='How long to wait after SIGTERM before sending SIGKILL.')
 parser.add_argument('subprocess',
@@ -83,9 +87,15 @@ class ProcessThread(threading.Thread):
 
 
 def log(message):
-    """Logs a message to stderr if -v was specified."""
+    """Logs a message to stderr if -v was specified.
+    
+    Logs to syslog instead of stdout if --syslog was specified.
+    """
     if args.verbose:
-        print >>sys.stderr, message
+        if args.syslog:
+            syslog.syslog(syslog.LOG_NOTICE, message)
+        else:
+            print >>sys.stderr, message
 
 
 def get_lock():
@@ -126,6 +136,7 @@ def main():
     t = ProcessThread([args.subprocess] + args.subprocess_args)
     log('starting subprocess: subprocess=%s, args=%s' % (
         args.subprocess, args.subprocess_args))
+    t_start = datetime.datetime.now()
     t.start()
 
     t.join(args.timeout)
@@ -139,12 +150,15 @@ def main():
     # The thread has already terminated, or we have forced its subprocess to
     # end, so it is safe to join() with no timeout here.
     t.join()
+    t_end = datetime.datetime.now()
+    time_taken = t_end - t_start
+    log('Took %s' % time_taken)
 
     if fh is not None:
         fh.close()
 
     if t.popen is not None:
-        log('pid = %d, ret= %d' % (t.popen.pid, t.popen.returncode))
+        log('pid = %d, ret = %d' % (t.popen.pid, t.popen.returncode))
         if t.popen.returncode != 0:
             return 4
     else:
