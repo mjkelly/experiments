@@ -16,6 +16,12 @@ import math
 import random
 import sys
 
+
+def bits2length(bits):
+    """Estimates the length of a password that has 'bits' entropy."""
+    chars = 89 # based on our friend, random-string.py
+    return round(bits / math.log(chars, 2))
+
 num_words = 5
 num_sentences = 10
 dictionary = '/usr/share/dict/words'
@@ -50,6 +56,8 @@ bits_per_phrase = sum([math.log(len(words) - n, 2) for n in range(num_words)])
 # pick a memorable phrase, we assume an attacker can determine which one was
 # picked.
 bits_per_pick = bits_per_phrase - math.log(num_sentences, 2)
+
+corresponding_pw = bits2length(bits_per_phrase)
 print("%d possible words (of %d in %s)." % (len(words), total_word_count, dictionary),
       file=sys.stderr)
 print("%d words per phrase (random but unique)." % num_words, file=sys.stderr)
@@ -58,6 +66,7 @@ print("∴ %f bits of entropy for first word." % bits_for_first_word,
 print("∴ %f bits of entropy for last word." % bits_for_last_word,
       file=sys.stderr)
 print("∴ %f bits of entropy per phrase." % bits_per_phrase, file=sys.stderr)
+print("(approximately equivalent to %d char random password)" % corresponding_pw, file=sys.stderr)
 print("%d phrases to choose from." % num_sentences, file=sys.stderr)
 print("∴ %f bits if you pick one phrase from this list." % bits_per_pick,
       file=sys.stderr)
