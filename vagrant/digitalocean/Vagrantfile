@@ -1,0 +1,38 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+# This creates and configures a Digital Ocean VM suitable for interactive use.
+# It pulls my public configs from github. It would be suitable as a throwaway
+# development machine, or something like that.
+#
+# Prerequisites:
+#   vagrant plugin install vagrant-digitalocean
+#   wget https://github.com/smdahlen/vagrant-digitalocean/raw/master/box/digital_ocean.box
+#   vagrant box add digital_ocean file://digital_ocean.box
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "digital_ocean"
+  config.ssh.private_key_path = "~/.ssh/digitalocean-key"
+
+  # This uses Digital Ocean's V2 API. Note that you authenticate solely with a
+  # token, and the image and region names have changed compared to V1.
+  #
+  # Go to <https://cloud.digitalocean.com/settings/tokens/new> to generate a
+  # new read/write token.
+  config.vm.provider :digital_ocean do |provider|
+    provider.token = "YOUR DIGITAL OCEAN API V2 TOKEN HERE"
+    provider.image = "14.04 x64"  # this is Ubuntu
+    provider.region = "nyc3"
+    provider.size = "512mb"
+    provider.ssh_key_name = "digitalocean1"
+  end
+
+  # Totally minimalist provisioning, piggybacking on my public configs directory.
+  # This will make a box suitable for interactive use.
+  config.vm.provision :shell, path: "bootstrap.sh"
+
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+end
