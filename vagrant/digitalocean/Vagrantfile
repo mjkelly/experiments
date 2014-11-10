@@ -5,29 +5,43 @@
 # It pulls my public configs from github. It would be suitable as a throwaway
 # development machine, or something like that.
 #
+# Authorization and account-specific details are in 'localonly.yaml'.
+#
 # Prerequisites:
 #   vagrant plugin install vagrant-digitalocean
 #   wget https://github.com/smdahlen/vagrant-digitalocean/raw/master/box/digital_ocean.box
 #   vagrant box add digital_ocean file://digital_ocean.box
+#   
+#   Then fill out a 'localonly.yaml' with the fields referenced in this file.
+#   It should look something like the following. The fields are hopefully
+#   self-explanatory:
+#
+#   auth:
+#     token: foo
+#     private_key_path: ~/.ssh/digitalocean-key
+#     ssh_key_name: digitalocean-key
+require 'yaml'
 
 # Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
 VAGRANTFILE_API_VERSION = "2"
 
+local = YAML.load_file 'config.yaml.localonly' # funny name is for my .gitignore
+
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.box = "digital_ocean"
-  config.ssh.private_key_path = "~/.ssh/digitalocean-key"
+  config.ssh.private_key_path = local['auth']['private_key_path']
 
   # This uses Digital Ocean's V2 API. Note that you authenticate solely with a
   # token, and the image and region names have changed compared to V1.
   #
   # Go to <https://cloud.digitalocean.com/settings/tokens/new> to generate a
   # new read/write token.
-  config.vm.provider :digital_ocean do |provider|
-    provider.token = "YOUR DIGITAL OCEAN API V2 TOKEN HERE"
-    provider.image = "14.04 x64"  # this is Ubuntu
-    provider.region = "nyc3"
-    provider.size = "512mb"
-    provider.ssh_key_name = "digitalocean1"
+  config.vm.provider :digital_ocean do |digitalocean|
+    digitalocean.token = local['auth']['token']
+    digitalocean.image = "14.04 x64"  # this is Ubuntu
+    digitalocean.region = "nyc3"
+    digitalocean.size = "512mb"
+    digitalocean.ssh_key_name = local['auth']['ssh_key_name']
   end
 
   # Totally minimalist provisioning, piggybacking on my public configs directory.
