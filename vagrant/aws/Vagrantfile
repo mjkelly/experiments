@@ -1,0 +1,61 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+#
+# This creates and configures a Digital Ocean VM suitable for interactive use.
+# It pulls my public configs from github. It would be suitable as a throwaway
+# development machine, or something like that.
+#
+# This config sets up a particular EC2 VM. Things like your amazon credentials,
+# and the credentials to access the VM, are kept in a 'localonly.yaml' file.
+#
+# Instructions:
+#   vagrant plugin install vagrant-aws
+#   wget https://github.com/mitchellh/vagrant-aws/raw/master/dummy.box
+#   vagrant box add dummy dummy.box
+#   
+#   Then fill out a 'localonly.yaml' with the fields referenced in this file.
+#   It should look something like the following. The fields are hopefully
+#   self-explanatory:
+#
+#   auth:
+#     access_key_id: foo
+#     secret_access_key: bar
+#     private_key_path: ~/.ssh/aws-key
+#     keypair_name: aws-key
+#   machine:
+#     security_groups: sg-123
+#     subnet_id: subnet-123
+require 'yaml'
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2"
+
+local = YAML.load_file 'config.yaml.localonly' # funny name is for my .gitignore
+
+Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
+  config.vm.box = "dummy"
+  config.ssh.private_key_path = local['auth']['private_key_path']
+
+  config.vm.provider :aws do |aws, override|
+    aws.region = "us-east-1"
+    # Ubuntu Server 14.04 LTS (HVM), SSD
+    aws.region_config "us-east-1", :ami => "ami-9eaa1cf6" 
+
+    aws.access_key_id = local['auth']['access_key_id']
+    aws.secret_access_key = local['auth']['secret_access_key']
+    aws.keypair_name = "digitalocean1"
+    aws.instance_type = "t2.micro"
+    aws.security_groups = local['machine']['security_groups']
+    aws.associate_public_ip = true
+    aws.subnet_id = local['machine']['subnet_id']
+
+    override.ssh.username = "ubuntu"
+  end
+
+
+  # Totally minimalist provisioning, piggybacking on my public configs directory.
+  # This will make a box suitable for interactive use.
+  config.vm.provision :shell, path: "bootstrap.sh"
+
+  config.vm.synced_folder ".", "/vagrant", disabled: true
+end
