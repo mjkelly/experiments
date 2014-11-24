@@ -15,21 +15,25 @@
 import math
 import random
 import sys
+import argparse
 
+parser = argparse.ArgumentParser(description='Generate random phrases.')
+parser.add_argument('words', type=int, nargs='?', default=5,
+        help='How many words per sentence.')
+parser.add_argument('--sentences', type=int, default=10,
+        help='How many sentences to print at once.')
+parser.add_argument('--simple', default=False, action='store_true',
+        help='Simple mode: Use only lowercase words, without aprostrophes.')
+args = parser.parse_args()
 
 def bits2length(bits):
     """Estimates the length of a password that has 'bits' entropy."""
     chars = 89 # based on our friend, random-string.py
     return round(bits / math.log(chars, 2))
 
-num_words = 5
-num_sentences = 10
+num_words = args.words
+num_sentences = args.sentences
 dictionary = '/usr/share/dict/words'
-
-if len(sys.argv) > 1:
-  num_words = int(sys.argv[1])
-if len(sys.argv) > 2:
-  num_sentences = int(sys.argv[2])
 
 total_word_count = 0
 words = []
@@ -38,6 +42,11 @@ with open(dictionary, 'r') as fh:
     total_word_count += 1
     line = line.strip()
     if len(line) > 2:
+      if args.simple:
+        if line.lower() != line:
+          continue
+        if "'" in line:
+          continue
       try:
         line.encode('ascii')
       except UnicodeEncodeError:
