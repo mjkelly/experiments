@@ -9,7 +9,8 @@ Usage
 ------
 
 To build, run:
-# docker build -t mjkelly/transmission . 
+
+    docker build -t mjkelly/transmission . 
 
 You may choose a different tag, of course. The tag "mjkelly/transmission" is
 what `run.sh` uses.
