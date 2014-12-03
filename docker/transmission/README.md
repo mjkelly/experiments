@@ -8,14 +8,26 @@ host.
 Usage
 ------
 
-`run.sh` is an example of how to start this image. Notably, the expectation is
-that the user will mount a data directory from the host.
+To build, run:
+# docker build -t mjkelly/transmission . 
 
-Additionally, if you have in-progress torrents (either downloading or seeding)
-that you want to import from your existing setup, you can populate the
-`/torrents` and `/resume` directories in `transmisison-daemon-config` before
-building, if you like. (Though this will dirty your image with your in-progress
-state.)
+You may choose a different tag, of course. The tag "mjkelly/transmission" is
+what `run.sh` uses.
+
+`run.sh` is an example of how to start this image, specifically to show
+examples of the volumes and forwarded ports required.
+
+This config uses volumes from the host for both the data directory (so you can
+access downloaded data), and for the configuration directory (so you can put
+things in the torrents directory, and so the resume directory persists).
+
+The RPC port is forwarded and bound only to localhost. The actual listening
+port is bound to 0.0.0.0 (so the host can accept incoming connections).
+
+If you have in-progress torrents (either downloading or seeding) that you want
+to import from your existing setup, you can populate the `/torrents` and
+`/resume` directories in `transmisison-daemon-config` before starting the
+image.
 
 
 Default Settings
