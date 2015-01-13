@@ -17,8 +17,8 @@ key_secret="ADDME"
 
 # == How to get current IP ==
 # There is no reason to change this unless the given server changes.
-ip_server="http://checkip.dyndns.com"
-current_ip="$(wget -q -O- ${ip_server} | perl -ne '/IP Address: ([\d\.]+)/; print $1;')"
+ip_server="http://ipv4.icanhazip.com"
+current_ip="$(wget -q -O- ${ip_server})"
 
 # == Update script ==
 # Change the path to the route53-update script if necessary.
