@@ -24,20 +24,22 @@ import logging
 import logging.handlers
 import optparse
 import os
+import os.path
 import sys
 import threading
 import time
 
+bin_name = os.path.basename(sys.argv[0])
 parser = optparse.OptionParser()
 parser.add_option('--no-daemonize', dest='daemonize', action='store_false', default=True,
     help='Whether to disconnect from terminal on startup. If this is false, we '
     'do not write to --pidfile or --logfile (we skip writing our PID, and logs '
     'go to stderr).')
 parser.add_option('--pidfile', dest='pidfile',
-    default='/var/run/read-temp-sensor.py.pid',
+    default='/var/run/%s.pid' % bin_name,
     help='Where to write PID on startup, if --daemonize is true.')
 parser.add_option('--logfile', dest='logfile',
-    default='/var/log/read-temp-sensor.py.log',
+    default='/var/log/%s.log' % bin_name,
     help='Where to write logs, if --daemonize is true.')
 parser.add_option('--tempfile', dest='tempfile',
     default='/var/tmp/current_temp_c',
@@ -220,6 +222,8 @@ logger = init_logging()
 if opts.daemonize:
   # Daemonize. (There are libraries to do this, but I'm trying to keep this as
   # self-contained as possible.)
+  logger.info('parent getpid = %s' % os.getpid())
+
   pid = os.fork()
   if pid < 0:
     sys.exit(1)
@@ -240,6 +244,7 @@ if opts.daemonize:
   os.dup2(new_fd, sys.stderr.fileno())
   os.dup2(new_fd, sys.stdin.fileno())
   # done daemonizing
+  logger.info('child getpid = %s' % os.getpid())
 
   with open(opts.pidfile, 'w') as fh:
     fh.write(str(os.getpid()))
