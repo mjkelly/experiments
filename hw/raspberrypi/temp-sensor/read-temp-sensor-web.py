@@ -188,7 +188,7 @@ def init_web(state):
           '# TYPE last_read gauge',
           'last_read {last_read}',
         ]))
-        self.wfile.write(output)
+        self.wfile.write(output + '\n')
 
     def _serve_text(self):
         self.send_response(200)
@@ -198,7 +198,7 @@ def init_web(state):
           'Temp (C): {temp_c}',
           'Last read time: {last_read}',
         ]))
-        self.wfile.write(output)
+        self.wfile.write(output + '\n')
 
     def do_GET(self):
       if self.path == '/metrics':
