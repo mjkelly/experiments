@@ -18,14 +18,15 @@
 # Michael Kelly (michael@michaelkelly.org)
 # Sat Feb 16 21:47:25 EST 2013
 
+import BaseHTTPServer
 import datetime
 import logging
 import logging.handlers
 import optparse
 import os
 import sys
+import threading
 import time
-import BaseHTTPServer
 
 parser = optparse.OptionParser()
 parser.add_option('--no-daemonize', dest='daemonize', action='store_false', default=True,
@@ -62,7 +63,14 @@ SPICS = 25
 
 SLEEP_TIME_S = 30
 
+
+### Globals ###
+
 logger = None
+http_server = None
+recent_temps = []
+
+### Functions ###
 
 def init_logging():
   # Initialize logging object first so functions can use it.
@@ -130,8 +138,6 @@ def readadc(adcnum, clockpin, mosipin, misopin, cspin):
   adcout /= 2       # first bit is 'null' so drop it
   return adcout
 
-recent_temps = []
-
 def output_data(data_read_time, read_adc0, millivolts, temp_C):
   # remove decimal point from millivolts
   millivolts = int(millivolts)
@@ -163,38 +169,51 @@ def init_web(state):
 
   class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
-    def serve_metrics(self):
+    def _format(self, s):
+        return s.format(temp_c=state['temp_c'],
+            last_read=state['last_read'])
+
+    def _serve_metrics(self):
         self.send_response(200)
-        self.send_header('Content-type', 'text/plain')
+        self.send_header('Content-type', 'text/plain; version=0.0.4')
         self.end_headers()
-        output = '\n'.join([
-            'foo',
-            'bar',
-        ]).format()
+        output = self._format('\n'.join([
+          '# HELP temp_c Temperature (Celsius)',
+          '# TYPE temp_c gauge',
+          'temp_c {temp_c}',
+          '',
+          '# HELP last_read Time of last sensor read, in unix time',
+          '# TYPE last_read gauge',
+          'last_read {last_read}',
+        ]))
         self.wfile.write(output)
-    def serve_text(self):
+
+    def _serve_text(self):
         self.send_response(200)
         self.send_header('Content-type', 'text/plain')
         self.end_headers()
-        output = '\n'.join([
-            'Temp (C): {temp_c}',
-            'Last read time: {last_read}',
-        ]).format(temp_c = state['temp_c'],
-            last_read = state['last_read'])
+        output = self._format('\n'.join([
+          'Temp (C): {temp_c}',
+          'Last read time: {last_read}',
+        ]))
         self.wfile.write(output)
 
     def do_GET(self):
       if self.path == '/metrics':
-        self.serve_metrics()
+        self._serve_metrics()
       else:
-        self.serve_text()
+        self._serve_text()
   
   host, port = opts.listen.split(':', 2)
   port = int(port)
-  s = BaseHTTPServer.HTTPServer((host, port), Handler)
-  s.serve_forever()
+  http_server = BaseHTTPServer.HTTPServer((host, port), Handler)
+  http_thread = threading.Thread(target=http_server.serve_forever)
+  http_thread.start()
+  return http_server
 
+### End of functions ###
 
+### Initialization ###
 
 logger = init_logging()
 
@@ -228,25 +247,34 @@ if opts.daemonize:
 
 state = {'temp_c': None, 'last_read': None}
 init_gpio()
-init_web(state)
+http_server = init_web(state)
 
 logger.info('Starting.')
 
 # temperature sensor connected channel 0 of mcp3008
 adcnum = 0
 
+### Main loop ###
+try:
+  while True:
+    # read the analog pin (temperature sensor LM35)
+    read_adc0 = readadc(adcnum, SPICLK, SPIMOSI, SPIMISO, SPICS)
+    state['last_read'] = int(time.time())
 
-while True:
-  # read the analog pin (temperature sensor LM35)
-  read_adc0 = readadc(adcnum, SPICLK, SPIMOSI, SPIMISO, SPICS)
-  state['last_read'] = time.Now()
+    # convert analog reading to millivolts = ADC * (3300 / 1024)
+    millivolts = read_adc0 * (3300.0 / 1024.0)
 
-  # convert analog reading to millivolts = ADC * (3300 / 1024)
-  millivolts = read_adc0 * (3300.0 / 1024.0)
+    # 10 mv per degree
+    state['temp_c'] = ((millivolts - 100.0) / 10.0) - 40.0
 
-  # 10 mv per degree
-  state['temp_c'] = ((millivolts - 100.0) / 10.0) - 40.0
+    output_data(datetime.datetime.now(), read_adc0, millivolts, state['temp_c'])
 
-  output_data(datetime.datetime.now(), read_adc0, millivolts, state['temp_c'])
+    time.sleep(SLEEP_TIME_S)
+except KeyboardInterrupt:
+  logger.info('got keyboard interrupt -- stopping.')
+  if http_server is not None:
+    logger.info('http_server stopping...')
+    http_server.shutdown()
+    logger.info('http_server stopped')
+  sys.exit(-1)
 
-  time.sleep(SLEEP_TIME_S)
