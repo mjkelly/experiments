@@ -29,7 +29,12 @@
 
 #define OPT_SPEC "vh"
 void usage(char * name) {
-  fprintf(stderr, "Usage: %s [-v]\n", name);
+  fprintf(stderr,
+      "Usage: %s [-v]\n\n"
+      "Outputs temperature in celsius, as read from a TMP36 attached to an\n"
+      "MCP3008 A/D converter.\n\n"
+      "With -v, outputs summary (value read, plus intermediate values).\n",
+      name);
   exit(2);
 }
 
