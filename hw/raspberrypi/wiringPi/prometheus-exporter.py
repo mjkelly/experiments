@@ -2,15 +2,18 @@
 # vim: set sw=2 ts=2 expandtab:
 #
 # Reads temperature value saved in a file and exports a Prometheus metrics
-# page.
+# page. This is a companion to read-temp.c in this directory, which populates
+# the temperature file.
+#
+# Because this script doesn't daemonize and doesn't keep a pidfile, etc, the
+# best way to trigger it is with an @reboot line in a crontab:
+#
+# @reboot prometheus-exporter.py >/dev/null 2>&1 &
 #
 # Michael Kelly (michael@michaelkelly.org)
 # Sat Jan 31 17:25:22 EST 2015
 
 import BaseHTTPServer
-import datetime
-import logging
-import logging.handlers
 import optparse
 import os
 import os.path
@@ -20,15 +23,11 @@ import time
 
 bin_name = os.path.basename(sys.argv[0])
 parser = optparse.OptionParser()
-parser.add_option('--no-daemonize', dest='daemonize', action='store_false', default=True,
-    help='Whether to disconnect from terminal on startup. If this is false, we '
-    'do not write to --pidfile or --logfile (we skip writing our PID, and logs '
-    'go to stderr).')
 parser.add_option('--tempfile', dest='tempfile',
     default='/var/run/current_temp_c',
     help='Where to write current temperature.')
 parser.add_option('--listen', dest='listen', default='0.0.0.0:8080',
-    help='What address and port to bind to if --web is true.')
+    help='What address and port to bind.')
 opts, _ = parser.parse_args()
 
 SLEEP_TIME_S = 15
@@ -86,33 +85,6 @@ def init_web(state):
 ### End of functions ###
 
 ### Initialization ###
-if opts.daemonize:
-  # Daemonize. (There are libraries to do this, but I'm trying to keep this as
-  # self-contained as possible.)
-  pid = os.fork()
-  if pid < 0:
-    sys.exit(1)
-  if pid > 0:
-    sys.exit(0)  # parent exits
-
-  # make our own process group
-  os.setsid()
-
-  # erase context from caller
-  os.chdir('/')
-
-  sys.stdout.flush()
-  sys.stderr.flush()
-
-  new_fd = os.open('/dev/null', os.O_RDWR)
-  os.dup2(new_fd, sys.stdout.fileno())
-  os.dup2(new_fd, sys.stderr.fileno())
-  os.dup2(new_fd, sys.stdin.fileno())
-  # done daemonizing
-  with open(opts.pidfile, 'w') as fh:
-    fh.write(str(os.getpid()))
-
-
 state = {'temp_c': 0, 'last_update': 0}
 http_server = init_web(state)
 
@@ -126,10 +98,7 @@ try:
         state['temp_c'] = fh.readline().strip()
     time.sleep(SLEEP_TIME_S)
 except KeyboardInterrupt:
-  logger.info('got keyboard interrupt -- stopping.')
   if http_server is not None:
-    logger.info('http_server stopping...')
     http_server.shutdown()
-    logger.info('http_server stopped')
   sys.exit(-1)
 
