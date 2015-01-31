@@ -25,7 +25,7 @@ parser.add_option('--no-daemonize', dest='daemonize', action='store_false', defa
     'do not write to --pidfile or --logfile (we skip writing our PID, and logs '
     'go to stderr).')
 parser.add_option('--tempfile', dest='tempfile',
-    default='/var/tmp/current_temp_c',
+    default='/var/run/current_temp_c',
     help='Where to write current temperature.')
 parser.add_option('--listen', dest='listen', default='0.0.0.0:8080',
     help='What address and port to bind to if --web is true.')

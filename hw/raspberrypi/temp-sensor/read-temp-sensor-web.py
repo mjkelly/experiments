@@ -42,7 +42,7 @@ parser.add_option('--logfile', dest='logfile',
     default='/var/log/%s.log' % bin_name,
     help='Where to write logs, if --daemonize is true.')
 parser.add_option('--tempfile', dest='tempfile',
-    default='/var/tmp/current_temp_c',
+    default='/var/run/current_temp_c',
     help='Where to write current temperature.')
 parser.add_option('--web', dest='web', action='store_true', default=False,
     help='Whether to set up read-only web interface for the data.')

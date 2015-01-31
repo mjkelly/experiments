@@ -3,7 +3,7 @@
 # Michael Kelly (michael@michaelkelly.org)
 # Tue Feb 19 22:43:05 EST 2013
 
-TEMP_FILE=/var/tmp/current_temp_c
+TEMP_FILE=/var/run/current_temp_c
 
 case $1 in
    config)

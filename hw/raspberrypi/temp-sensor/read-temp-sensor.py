@@ -33,7 +33,7 @@ SPICS = 25
 
 LOG_FILE = '/var/log/read-temp-sensor.py.log'
 PID_FILE = '/var/run/read-temp-sensor.py.pid'
-CURRENT_TEMP_FILE = '/var/tmp/current_temp_c'
+CURRENT_TEMP_FILE = '/var/run/current_temp_c'
 SLEEP_TIME_S = 30
 
 
