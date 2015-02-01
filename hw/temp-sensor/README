@@ -1,0 +1,9 @@
+These programs read a temperature sensor from a raspberry pi.
+
+This is specifically designed to read a TMP36 thermistor connected to an
+MCP3008 A/D converter. More details are in the .py files.
+
+Apart from just reading the temperature, a lot of what's in here focuses on
+exposing that data in an easy-to-consume way (the collector runs as a daemon,
+there are initscripts, and there are separate plugins for various monitoring
+frameworks)
