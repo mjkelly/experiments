@@ -1,6 +1,7 @@
 #!/bin/bash
 # Renew the letsencrypt cert for home.michaelkelly.org.
 /home/mkelly/git/letsencrypt/letsencrypt-auto \
+  --quiet \
   --non-interactive \
   --webroot \
   -w /var/www \
