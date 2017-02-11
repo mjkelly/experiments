@@ -1,0 +1,10 @@
+#!/bin/bash
+# Renew the letsencrypt cert for home.michaelkelly.org.
+/home/mkelly/git/letsencrypt/letsencrypt-auto \
+  --non-interactive \
+  --webroot \
+  -w /var/www \
+  -d home.michaelkelly.org \
+  --keep-until-expiring \
+  certonly && \
+  service apache2 restart
