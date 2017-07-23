@@ -25,11 +25,13 @@ and you must fill out your hostname for the redirection rules.
    * Edit `relayhost` in `main.cf`; set it to your actual relay host.
    * Create `/etc/postfix/relay_password`. The format is this:
      `relayhost:port username:password'
-     Mind the permissions of this file when you create it.
+     There's a sample file in `relay_password.sample`.
+     Mind the permissions of this file when you create it. 
    * Create `/etc/postfix/virtual`, enter your rewriting rules. See
      http://www.postfix.org/VIRTUAL_README.html for documentation on the
      format. Set this to something like:
      `@$HOSTNAME destination@email.address`
+     There's a sample file in `virtual.sample`.
      Where you fill out `$HOSTNAME` and your destination email address.
    * Copy `main.cf` to `/etc/postfix`.
    * Run `postmap /etc/postfix/relay_password` and
