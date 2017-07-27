@@ -148,7 +148,7 @@ _EOF_
 fi
 
 echo "User-data:"
-cat ${ud_path}
+$prefix cat ${ud_path}
 
 $prefix cp "${disk_path}" "${live_path}"
 echo "instance-id: $node_name; local-hostname: $node_name" > ${md_path}
@@ -156,7 +156,7 @@ echo "instance-id: $node_name; local-hostname: $node_name" > ${md_path}
 # The path is important here because we want to reference meta-data and
 # user-data by their basenames. (There might be some sort of base dir option we
 # can pass to genisoimage instead.)
-mkdir ${ci_iso_dir}
+$prefix mkdir ${ci_iso_dir}
 pushd ${ci_iso_dir}
 $prefix genisoimage \
   -output ${ci_iso_path} \
