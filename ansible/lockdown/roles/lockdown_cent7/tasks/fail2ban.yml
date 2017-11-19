@@ -25,6 +25,7 @@
   shell: firewall-cmd --direct --get-all-rules | grep fail2ban-sshd
   ignore_errors: true
   register: fail2ban_ssh_rule
+  changed_when: false
 
 - name: Restart fail2ban to reinstate fail2ban-ssh rules
   service: name=fail2ban state=restarted enabled=yes
