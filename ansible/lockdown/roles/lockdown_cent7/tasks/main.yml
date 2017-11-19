@@ -1,6 +1,8 @@
 ---
 - import_tasks: selinux.yml
-- import_tasks: epel.yml
-- import_tasks: fail2ban.yml
 - import_tasks: firewalld.yml
 - import_tasks: yum-cron.yml
+- import_tasks: epel.yml
+# We must put fail2ban after firewalld because fail2ban relies on setting some
+# firewalld state.
+- import_tasks: fail2ban.yml

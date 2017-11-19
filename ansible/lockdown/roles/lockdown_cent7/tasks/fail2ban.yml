@@ -16,3 +16,16 @@
 - name: Reload fail2ban
   service: name=fail2ban state=reloaded enabled=yes
   when: jails.changed
+
+# If fail2ban does not install the firewalld direct rule that blocks traffic
+# from IPs in the fail2ban-sshd ipset, we won't block any banned traffic. Do a
+# crude check for the rule here and restart fail2ban (which will reinstate the
+# rule) if necessary.
+- name: Check fail2ban-ssh rule in firewalld
+  shell: firewall-cmd --direct --get-all-rules | grep fail2ban-sshd
+  ignore_errors: true
+  register: fail2ban_ssh_rule
+
+- name: Restart fail2ban to reinstate fail2ban-ssh rules
+  service: name=fail2ban state=restarted enabled=yes
+  when: fail2ban_ssh_rule.rc
