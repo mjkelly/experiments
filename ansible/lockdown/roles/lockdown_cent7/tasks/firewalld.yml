@@ -1,9 +1,9 @@
 ---
-- name: Write public service def
+- name: Write firewalld.conf
   template: src=firewalld.conf.j2 dest=/etc/firewalld/firewalld.conf
   register: firewalld_conf
 
-- name: Write public service def
+- name: Write public zone def
   template: src=firewalld-public.xml.j2 dest=/etc/firewalld/zones/public.xml
   register: firewalld_conf
 
