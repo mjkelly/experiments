@@ -1,0 +1,4 @@
+---
+# Hosts to exempt from fail2ban rules.
+# This is a space-separated list of networks (in CIDR notation).
+fail2ban_ignore: 192.168.1.0/24

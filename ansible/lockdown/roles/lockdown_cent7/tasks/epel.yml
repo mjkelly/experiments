@@ -1,0 +1,7 @@
+---
+# EPEL contains fail2ban.
+
+- name: Enable EPEL
+  yum: name={{ item }} state=present
+  with_items:
+   - epel-release

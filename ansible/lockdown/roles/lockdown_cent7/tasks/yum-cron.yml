@@ -1,0 +1,17 @@
+---
+# This is based on a nice explanation here: 
+# https://serversforhackers.com/c/automatic-security-updates-centos
+
+- name: Install yum-cron
+  yum: name={{ item }} state=present
+  with_items:
+   - yum-cron
+
+- name: Enable yum-cron
+  service: name=yum-cron state=started enabled=yes
+
+- name: Update yum-cron template
+  template: src=yum-cron.conf.j2 dest=/etc/yum/yum-cron.conf
+
+# yum-cron is not reloadable (because it's a cron job), so we don't need to
+# conditionally reload it.

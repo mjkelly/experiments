@@ -1,0 +1,5 @@
+---
+- name: Enable SELinux
+  selinux:
+    policy: targeted
+    state: enforcing

@@ -1,0 +1,5 @@
+---
+- name: apply lockdown rules
+  hosts: all
+  roles:
+    - lockdown_cent7
