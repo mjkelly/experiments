@@ -2,9 +2,7 @@
 # Install and enable fail2ban
 
 - name: Install fail2ban
-  yum: name={{ item }} state=present
-  with_items:
-   - fail2ban
+  package: name=fail2ban state=present
 
 - name: Enable SSH jail
   template: src=local-sshd.conf.j2 dest=/etc/fail2ban/jail.d/local-sshd.conf

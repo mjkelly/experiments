@@ -1,6 +1,6 @@
 ---
 - name: Install firewalld
-  yum: name=firewalld state=present
+  package: name=firewalld state=present
 
 - name: Write firewalld.conf
   template: src=firewalld.conf.j2 dest=/etc/firewalld/firewalld.conf

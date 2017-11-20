@@ -3,9 +3,7 @@
 # https://serversforhackers.com/c/automatic-security-updates-centos
 
 - name: Install yum-cron
-  yum: name={{ item }} state=present
-  with_items:
-   - yum-cron
+  package: name=yum-cron state=present
 
 - name: Enable yum-cron
   service: name=yum-cron state=started enabled=yes
