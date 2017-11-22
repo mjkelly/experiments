@@ -1,0 +1,13 @@
+---
+- name: Disallow root login via SSH
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?\\w*PermitRootLogin"
+    line: "PermitRootLogin no"
+  register: sshd_config
+  tags: [ssh]
+
+- name: Reload sshd
+  service: name=sshd state=reloaded enabled=yes
+  when: sshd_config.changed
+  tags: [ssh]
