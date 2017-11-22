@@ -4,12 +4,15 @@
 
 - name: Install yum-cron
   package: name=yum-cron state=present
+  tags: [yum-cron]
 
 - name: Enable yum-cron
   service: name=yum-cron state=started enabled=yes
+  tags: [yum-cron]
 
 - name: Update yum-cron template
   template: src=yum-cron.conf.j2 dest=/etc/yum/yum-cron.conf
+  tags: [yum-cron]
 
 # yum-cron is not reloadable (because it's a cron job), so we don't need to
 # conditionally reload it.

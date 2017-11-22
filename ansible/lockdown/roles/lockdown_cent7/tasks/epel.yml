@@ -3,3 +3,4 @@
 
 - name: Enable EPEL
   package: name=epel-release state=present
+  tags: [epel]

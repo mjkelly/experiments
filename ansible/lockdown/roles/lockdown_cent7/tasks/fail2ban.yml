@@ -3,17 +3,21 @@
 
 - name: Install fail2ban
   package: name=fail2ban state=present
+  tags: [fail2ban]
 
 - name: Enable SSH jail
   template: src=local-sshd.conf.j2 dest=/etc/fail2ban/jail.d/local-sshd.conf
   register: jails
+  tags: [fail2ban]
 
 - name: Start fail2ban
   service: name=fail2ban state=started enabled=yes
+  tags: [fail2ban]
 
 - name: Reload fail2ban
   service: name=fail2ban state=reloaded enabled=yes
   when: jails.changed
+  tags: [fail2ban]
 
 # If fail2ban does not install the firewalld direct rule that blocks traffic
 # from IPs in the fail2ban-sshd ipset, we won't block any banned traffic. Do a
@@ -24,7 +28,9 @@
   ignore_errors: true
   register: fail2ban_ssh_rule
   changed_when: false
+  tags: [fail2ban]
 
 - name: Restart fail2ban to reinstate fail2ban-ssh rules
   service: name=fail2ban state=restarted enabled=yes
   when: fail2ban_ssh_rule.rc
+  tags: [fail2ban]
