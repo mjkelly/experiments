@@ -8,15 +8,11 @@
 - name: Enable SSH jail
   template: src=local-sshd.conf.j2 dest=/etc/fail2ban/jail.d/local-sshd.conf
   register: jails
+  notify: [Reload fail2ban]
   tags: [fail2ban]
 
 - name: Start fail2ban
   service: name=fail2ban state=started enabled=yes
-  tags: [fail2ban]
-
-- name: Reload fail2ban
-  service: name=fail2ban state=reloaded enabled=yes
-  when: jails.changed
   tags: [fail2ban]
 
 # If fail2ban does not install the firewalld direct rule that blocks traffic
