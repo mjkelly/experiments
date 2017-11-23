@@ -10,6 +10,10 @@ If you rely on the root password to administer your server(s) (via `su`), or
 logging in as root via ssh, do not apply this recipe. We disable the root
 password and disallow root from logging in via ssh.
 
+We check that you aren't using root to run ansible (which implies you have some
+other user who can sudo, so you won't lock yourself out), but that isn't a
+perfect check.
+
 ## Configuration
 
 Check `group_vars/all.yml` for config options.
