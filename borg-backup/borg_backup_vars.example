@@ -1,0 +1,14 @@
+# This is sourced by borg_backup.sh.
+
+# Setting this, so the repo does not need to be given on the commandline:
+#export BORG_REPO=ssh://username@example.com:2022/~/backup/main
+export BORG_REPO=ssh://example-org/~/borg-$HOSTNAME
+
+# Setting this, so you won't be asked for your repository passphrase:
+export BORG_PASSPHRASE='foo bar baz qux'
+# or this to ask an external program to supply the passphrase:
+#export BORG_PASSCOMMAND='pass show backup'
+
+# Set any extra options needed by borg here. (E.g. on rsync.net, this should be
+# "--remote-path=borg1".)
+export EXTRA_BORG_ARGS=--remote-path=borg1

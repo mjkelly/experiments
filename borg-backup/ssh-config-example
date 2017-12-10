@@ -1,0 +1,5 @@
+Host example-org
+  User 12345
+  HostName example.org
+  IdentityFile ~/.ssh/example-key
+
