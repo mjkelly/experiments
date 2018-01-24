@@ -22,6 +22,9 @@
 # surreptitiously added a new keyboard and mouse to another coworker's machine,
 # and very occasionally moved the mouse or typed a single letter. (This script
 # still relies on a file can be changed, but it raises the bar.)
+#
+# This script, in all its simplicity and silliness, is lovingly dedicated to
+# Phil Hutton, who was a wonderful friend and mentor.
 # -----------------------------------------------------------------
 
 # Change these if your lsusb is installed somewhere else.
