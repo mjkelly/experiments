@@ -44,6 +44,10 @@ recipient_delimiter = +
 # We listen on port 25, but only from localhost!
 inet_interfaces = 127.0.0.1
 
+# This sets the default hostname when sending mail, e.g. via mailx.
+# CHANGEME
+mydomain = $HOSTNAME$
+
 ##############################################################################
 # This section determines which addresses to rewrite.
 ##############################################################################
