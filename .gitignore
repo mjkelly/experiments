@@ -1,3 +1,6 @@
 local-rsrc/
 *.pyc
 *.localonly
+
+ansible/postfix-relay/group_vars/all.yml
+ansible/postfix-relay/hosts

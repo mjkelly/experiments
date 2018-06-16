@@ -1,0 +1,68 @@
+# This postfix config file sets up a machine to relay all mail sent from
+# localhost through a specific relay host. It rewrites mail sent to the
+# localhost via its FQDN through the smarthost as well.
+#
+# These settings are designed to catch notification emails sent from system
+# daemons, and forward them to a mailbox that the administrator regularly
+# checks.
+#
+# Michael Kelly <michael@michaelkelly.org>
+# Fri Apr  4 23:25:24 EDT 2014
+
+
+##############################################################################
+# General setup. This is copied from a Debian config with minor changes.
+##############################################################################
+smtpd_banner = $myhostname ESMTP $mail_name (GNU/Linux)
+biff = no
+# appending .domain is the MUA's job.
+append_dot_mydomain = no
+readme_directory = no
+
+# TLS parameters
+smtpd_tls_cert_file=/etc/ssl/certs/ssl-cert-snakeoil.pem
+smtpd_tls_key_file=/etc/ssl/private/ssl-cert-snakeoil.key
+smtpd_use_tls=yes
+smtpd_tls_session_cache_database = btree:${data_directory}/smtpd_scache
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+
+# See /usr/share/doc/postfix/TLS_README.gz in the postfix-doc package for
+# information on enabling SSL in the smtp client.
+
+smtpd_relay_restrictions = permit_mynetworks permit_sasl_authenticated defer_unauth_destination
+alias_maps = hash:/etc/aliases
+alias_database = hash:/etc/aliases
+# Note that $myhostname is missing here. That's what makes delivery there
+# non-local. This means mail to "root@$HOSTNAME" will be non-local, but
+# "root@localhost" won't.
+mydestination = localhost.$mydomain, localhost
+mynetworks = 127.0.0.0/8 [::ffff:127.0.0.0]/104 [::1]/128
+# This is probably unnecessary:
+#mailbox_command = procmail -a "$EXTENSION"
+mailbox_size_limit = 0
+recipient_delimiter = +
+# We listen on port 25, but only from localhost!
+inet_interfaces = 127.0.0.1
+# This sets the default hostname when sending mail, e.g. via mailx. Machine
+# short hostname is added to this domain.
+mydomain = {{ domain }}
+
+##############################################################################
+# This section determines which addresses to rewrite.
+##############################################################################
+virtual_alias_domains = $myhostname
+# You must run 'postmap /etc/postfix/virtual' to generate a db file that this
+# config can use.
+virtual_alias_maps = hash:/etc/postfix/virtual
+
+##############################################################################
+# This section is about talking to the relay host.
+##############################################################################
+# Replace with specific relayhost.
+relayhost = [{{ relay_host }}]:{{ relay_port }}
+smtp_sasl_auth_enable = yes
+smtp_sasl_security_options = noanonymous
+smtp_sasl_password_maps = hash:/etc/postfix/relay_password
+smtp_use_tls = yes
+smtp_tls_security_level = encrypt
+smtp_tls_note_starttls_offer = yes

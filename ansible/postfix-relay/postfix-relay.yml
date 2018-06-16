@@ -1,0 +1,5 @@
+---
+- name: Configure postfix smarthost
+  hosts: all
+  roles:
+    - postfix-relay

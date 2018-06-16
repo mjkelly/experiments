@@ -1,0 +1,2 @@
+[all]
+mymachine.example.com ansible_become=true
