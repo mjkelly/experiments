@@ -10,7 +10,7 @@
 
 - name: Update relay_password DB file
   command: postmap /etc/postfix/relay_password
-  when: etc_postfix_relay_password|changed
+  when: etc_postfix_relay_password is changed
 
 - name: Write virtual
   template: src=virtual.j2 dest=/etc/postfix/virtual
@@ -19,7 +19,7 @@
 
 - name: Update virtual DB file
   command: postmap /etc/postfix/virtual
-  when: etc_postfix_virtual|changed
+  when: etc_postfix_virtual is changed
 
 - name: Start postfix
   service: name=postfix state=started enabled=yes
