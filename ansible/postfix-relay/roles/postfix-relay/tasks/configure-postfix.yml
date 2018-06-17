@@ -9,7 +9,7 @@
   register: etc_postfix_relay_password
 
 - name: Update relay_password DB file
-  command: /sbin/postmap /etc/postfix/relay_password
+  command: postmap /etc/postfix/relay_password
   when: etc_postfix_relay_password|changed
 
 - name: Write virtual
@@ -18,7 +18,7 @@
   register: etc_postfix_virtual
 
 - name: Update virtual DB file
-  command: /sbin/postmap /etc/postfix/virtual
+  command: postmap /etc/postfix/virtual
   when: etc_postfix_virtual|changed
 
 - name: Start postfix
