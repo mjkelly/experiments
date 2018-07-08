@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -----------------------------------------------------------------
-# vimv.py -- Renames files in the current directory through a text editor.
+# mved.py -- Renames files in the current directory through a text editor.
 # Copyright 2007 Michael Kelly (michael@michaelkelly.org)
 #
 # This program is released under the terms of the GNU General Public
@@ -8,13 +8,13 @@
 # of the License, or (at your option) any later version.
 #
 # Sun Feb  7 13:38:06 EST 2010
+# Updated Sun Jul  8 03:11:00 EDT 2018
 # -----------------------------------------------------------------
 
 import sys
 import os
-import re
 import tempfile
-from optparse import OptionParser, OptionGroup
+import optparse
 
 def sorted_file_list(directory, all=False):
   '''Get a sorted list of the files in the given directory.
@@ -22,64 +22,44 @@ def sorted_file_list(directory, all=False):
   Args:
     all: if true, include hidden (dot) files.
   '''
-  hidden = re.compile(r'^\.')
   files = os.listdir(directory)
 
-  hidden = re.compile(r'^\.')
   if not all:
-    new_files = []
-    for file in files:
-      if not hidden.match(file):
-        new_files.append(file)
-    files = new_files
+    files = [f for f in files if not f.startswith('.')]
   
   files.sort()
   return files
 
 def get_editor():
-  '''Try to get the user's editor from $EDITOR and $VISUAL. If those
-  aren't set, fall back on 'vi'.'''
-  editor = os.getenv('EDITOR')
-  if editor is None:
-    editor = os.getenv('VISUAL')
-  if editor is None:
-    editor = 'vi'
-  return editor
+  '''Try to get the user's editor from $EDITOR and $VISUAL.
+  
+  If those aren't set, fall back on 'vi'.
+  '''
+  return os.getenv('EDITOR', os.getenv('VISUAL', 'vi'))
 
 def confirm(msg, default=False):
   '''Prompt the user with message to which they can reply 'y' or 'n'.'''
-
-  if default:
-    yesno = " [Y/n] "
-  else:
-    yesno = " [y/N] "
-
-  sys.stdout.write(msg + yesno)
+  sys.stdout.write(msg + ' [y/N] ')
+  sys.stdout.flush()
   response = sys.stdin.readline().strip().lower()
-
-  if default:
-    return response != 'n' and response != 'no'
-  else:
-    return response == 'y' or response == 'yes'
+  return response == 'y' or response == 'yes'
 
 def main(argv):
-
-  opt_parser = OptionParser(usage="%prog [OPTIONS] [PATTERN]")
-  opt_parser.add_option("-a", action="store_true", dest="list_all",
+  parser = optparse.OptionParser()
+  parser.add_option("-a", action="store_true", dest="list_all",
     help='List all files (including dotfiles; excluding "." and "..").')
-  opt_parser.set_defaults(list_all=False)
+  parser.set_defaults(list_all=False)
 
-  (opts, args) = opt_parser.parse_args()
+  opts, args = parser.parse_args()
 
   cwd = os.getcwd()
 
   files = sorted_file_list(cwd, opts.list_all)
-
   editor = get_editor()
   
-  (tmpfd, tmpname) = tempfile.mkstemp()
-  for file in files:
-    os.write(tmpfd, file + "\n")
+  tmpfd, tmpname = tempfile.mkstemp()
+  for f in files:
+    os.write(tmpfd, f + "\n")
   os.close(tmpfd)
 
   pid = os.fork()
@@ -92,48 +72,50 @@ def main(argv):
       sys.exit(1)
 
   # parent (child ends with execvp)
-  (w_pid, w_status) = os.waitpid(pid, 0)
+  w_pid, w_status = os.waitpid(pid, 0)
 
   if w_status != 0:
-    print "**** Editor exited with nonzero status (%d)." % w_status
+    print "%s exited with nonzero status (%d). Aborting." % (editor, w_status)
+    sys.exit(2)
   
   tmp = open(tmpname, 'r')
-  i = 0
   new_files = tmp.readlines()
-  changes = 0
-  for new_file in new_files:
+  if len(new_files) != len(files):
+    print ("ERROR: You added or deleted a line. Don't do that. Use blank "
+           "lines to delete files.")
+    sys.exit(2)
+
+  new_files = [f.rstrip('\n\r') for f in new_files]
+
+  renames, deletes = 0, 0
+  for i, new_file in enumerate(new_files):
     old_file = files[i]
-    new_file = new_file.rstrip('\n\r')
     if files[i] != new_file:
       if new_file != '':
         print "RENAME: '%s' --> '%s'" % (old_file, new_file)
-        changes += 1
+        renames += 1
       else:
         print "DELETE: '%s'" % old_file
-        changes += 1
-    i += 1
+        deletes += 1
   tmp.close()
 
   os.unlink(tmpname)
 
-  if len(new_files) != len(files):
-    print "ERROR: You added or deleted a line. Don't do that. Use blank lines to delete files."
-    sys.exit(1)
-
   response = False
-  if changes > 0:
-    response = confirm("Confirm changes?", default=(w_status == 0))
-
-  if response:
-    print "Yes. Renaming..."
+  if renames + deletes > 0:
+    response = confirm(
+      "Rename %d files and delete %d files?" % (renames, deletes),
+      default=False)
   else:
-    print "No. Aborting."
+    print "No changes."
     sys.exit(0)
+
+  if not response:
+    print "No. Aborting."
+    sys.exit(1)
   
-  i = 0
-  while i < len(new_files):
+  for i, new_file in enumerate(new_files):
     old_file = files[i]
-    new_file = new_files[i].rstrip('\n\r')
     if old_file != new_file:
       try:
         if new_file != '':
@@ -144,10 +126,8 @@ def main(argv):
           os.unlink(old_file)
       except OSError, e:
         print e
-    i += 1
   
   print "Done."
-
 
 if __name__ == '__main__':
   main(sys.argv)
