@@ -56,7 +56,7 @@ with open(dictionary, 'r') as fh:
 # random.sample() chooses a random but unique set of words from the candidates,
 # so each word pick is not independent from the others. Because words can't
 # repeat, each additional word in the phrase adds a decreasing amount of
-# entropy. (The different is miniscule, but nonzero.)
+# entropy. (The different is minuscule, but nonzero.)
 bits_for_first_word = math.log(len(words), 2)
 bits_for_last_word = math.log(len(words) - (num_words - 1), 2)
 bits_per_phrase = sum([math.log(len(words) - n, 2) for n in range(num_words)])
