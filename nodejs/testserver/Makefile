@@ -1,4 +1,4 @@
-.PHONY: clean run
+.PHONY: clean run local-build local-run lint
 
 build:
 	docker build -t nodetest:latest .
@@ -11,3 +11,6 @@ local-build:
 
 local-run:
 	nodejs ./server.js
+
+lint:
+	xo
