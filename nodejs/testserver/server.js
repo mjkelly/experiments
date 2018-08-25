@@ -3,7 +3,7 @@ const promclient = require('prom-client');
 
 const port = 8080;
 const app = express();
-const serverName = process.env.server_name || 'UNKNOWN';
+const serverName = process.env.SERVER_NAME || 'UNKNOWN';
 
 const counter = new promclient.Counter({
   name: 'hit_counter',
@@ -18,6 +18,7 @@ app.get('/', (req, res) => {
 
 app.get('/health', (req, res) => {
   counter.inc({path: '/health'});
+  res.set('Content-type', 'text/plain');
   res.send('ok\n');
 });
 
