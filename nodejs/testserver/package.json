@@ -1,0 +1,21 @@
+{
+  "name": "testserver",
+  "version": "1.0.0",
+  "description": "test nodejs server",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.16.3",
+    "prom-client": "^11.1"
+  },
+  "scripts": {
+    "test": "xo",
+    "start": "node server.js"
+  },
+  "author": "michael@michaelkelly.org",
+  "devDependencies": {
+    "xo": "^0.22.0"
+  },
+  "xo": {
+    "space": true
+  }
+}
