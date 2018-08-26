@@ -1,0 +1,23 @@
+{
+  "name": "github-api",
+  "version": "1.0.0",
+  "description": "play REST APIs via github",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.16.3",
+    "prom-client": "^11.1",
+    "request": "^2.88.0",
+    "request-promise-native": "^1.0.5"
+  },
+  "scripts": {
+    "test": "xo",
+    "start": "node server.js"
+  },
+  "author": "michael@michaelkelly.org",
+  "devDependencies": {
+    "xo": "^0.22.0"
+  },
+  "xo": {
+    "space": true
+  }
+}
