@@ -9,3 +9,4 @@ end
 
 include_recipe 'lockdown::ufw'
 include_recipe 'lockdown::ssh'
+include_recipe 'lockdown::unattended-upgrades'

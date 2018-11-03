@@ -1,6 +1,6 @@
 #
 # Cookbook:: lockdown
-# Recipe:: ssh
+# Recipe:: ufw
 #
 
 cookbook_file '/etc/ufw/user.rules' do
