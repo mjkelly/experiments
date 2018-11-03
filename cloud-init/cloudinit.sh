@@ -1,139 +1,105 @@
 #!/bin/bash
-# A helper for creating cloud-init VMs with libvirt.
-# The intended use case is to make it easy to spin up disposable VMs.
+# A helper for creating cloudinit VMs.
 #
-# We take a handful of arguments as environment variables. Optionally, the
-# first argument may be "--delete" to delete a VM.
+# Sample usage:
+# $ cloudinit.sh --create --name node0
+# $ cloudinit.sh --list
+# $ cloudinit.sh --delete --name node0
 #
-# There is some global configuration below that specifies where to look for #
-# disk images, and where to put the resulting VM images. Adjust as necessary.
-#
-# *** BEWARE ***
-# We make a *bunch* of guesses about how the VM should be configured, and then
-# set a default username/password! If you want to change that, you can specify
-# a custom cloud-init file, which will override lots of the other options.
-#
-# Example usage:
-#   Start a VM called "node0":
-#     cloudinit.sh 
-#   Delete "node0":
-#     cloudinit.sh --delete
-#   Specify name and VM size:
-#     CLOUDINIT_RAM_MB=512
-#     CLOUDINIT_CPUS=1
-#     CLOUDINIT_NODE_NAME=mynode
-#     cloudinit.sh
+# See --help for options.
 
-### START OF GLOBAL CONFIGURATION ###
-# General configuration -- edit this for your libvirt setup.
-disk_dir=/var/lib/virt/cloud-init/disks
-live_dir=/var/lib/virt/cloud-init
-### END OF GLOBAL CONFIGURATION ###
+set -e
+set -u
 
-# We take arguments via environment variables because we're lazy.
-node_name=${CLOUDINIT_NODE_NAME:-node0}
-disk=${CLOUDINIT_DISK:-xenial-server-cloudimg-amd64-disk1.img}
-dry_run=${CLOUDINIT_DRY_RUN:-no}
-ram_mb=${CLOUDINIT_RAM_MB:-1024}
-cpus=${CLOUDINIT_CPUS:-2}
-cloud_init_file=${CLOUDINIT_FILE:-}
-domain=${CLOUDINIT_DOMAIN:-$(hostname -d)}
-ssh_key_file=${CLOUDINIT_SSH_KEY:-$HOME/authorized_keys}
-os_variant=${CLOUDINIT_OS_VARIANT:-debian7}
+# === Globals ===
+# Base images
+disk_base_dir=/var/lib/virt/cloud-init/disks
+# Live VM images
+disk_dir=/var/lib/virt/cloud-init
 
-# Sanity checks
-if [[ ! -d "${disk_dir}" ]]; then
-  echo "disk_dir $disk_dir (for disk cloud images) does not exist. Exiting."
-  exit 1
-fi
-if [[ ! -d "${live_dir}" ]]; then
-  echo "live_dir $live_dir (for VM images) does not exist. Exiting."
-  exit 1
-fi
 
-for bin in genisoimage virt-install; do
-  which $bin >/dev/null 2>&1
-  if [[ "$?" != "0" ]]; then
-    echo "Cannot find required program $bin. Aborting."
-    exit 1
-  fi
-done
-
-action="create"
-if [[ "$1" = "--delete" ]]; then
-  action="delete"
-elif [[ -n "$1" ]]; then
-  echo "Unknown argument $1"
-  exit 2
-fi
-
-# Figure out all the paths of things we'll use or create
-disk_path="${disk_dir}/${disk}"
-live_path="${live_dir}/${node_name}.raw"
-ci_iso_dir=${live_dir}/${node_name}.cidata.d
-md_path=${ci_iso_dir}/meta-data
-ud_path=${ci_iso_dir}/user-data
-ci_iso_path=${live_dir}/${node_name}.cidata.iso
-
-ssh_key="$(head -n 1 ${ssh_key_file})"
-
-# Print out a confirmation of what we'll do.
-if [[ "${dry_run}" == "yes" ]]; then
-  prefix="echo Would run: "
-else
-  prefix=""
-fi
-
-if [[ "${dry_run}" == "yes" ]]; then
-  echo "*** DRY RUN ***"
-fi
-if [[ "${action}" == "delete" ]]; then
-  echo "WILL DELETE:"
-  echo "Node name: ${node_name}"
-  echo "Live disk: ${live_path}"
-  echo "Cloud-init disk: ${ci_iso_path}"
-else
-  echo "Node name: ${node_name}"
-  echo "Node domain: ${domain}"
-  echo "Source disk: ${disk_path}"
-  echo "Live disk: ${live_path}"
-  echo "RAM: ${ram_mb} MB"
-  echo "CPUs: ${cpus}"
-  echo "SSH key (from $ssh_key_file): ${ssh_key}"
-  if [[ -n "${cloud_init_file}" ]]; then
-    echo "Cloud-init file: ${cloud_init_file}"
-  else
-    echo "Using default cloud-init file (cloud/cloud123 user)"
-  fi
-  echo "Cloud-init source dir: ${ci_iso_dir}"
-  echo "Cloud-init disk: ${ci_iso_path}"
-fi
-
-echo "Ok? [y/N]"
-read resp
-if [[ "${resp}" != "y" && "${resp}" != "Y" ]]; then
-  echo "Aborted by user."
-  exit 1
-fi
-
-if [[ "${action}" == "delete" ]]; then
-  $prefix virsh destroy "${node_name}"
-  $prefix virsh undefine "${node_name}" --remove-all-storage
-  exit 0
-fi
-
+# === Default values for flags ===
+name=''
+op=''
+#image=debian-9.5.6-20181013-openstack-arm64.qcow2
+image=xenial-server-cloudimg-amd64-disk1.img
+ram_mb=1024
+cpus=1
+keys_file=$HOME/.ssh/authorized_keys
 user=cloud
 # This is just cloud123 :)
 pass_hash='$6$saltsalt$wVzOxp139jXJm2bHzpMAu/52NJLuaPceqzdvGa./Pxu5.amCga/iJsPLejmOHcd6/EAsslzKy79a49nP85FMR0'
 
-if [[ -n "${cloud_init_file}" ]]; then
-  $prefix cp ${cloud_init_file} ${ud_path}
-else
-  $prefix cat <<_EOF_ > ${ud_path}
+# === Flag parsing ===
+opts=$(getopt \
+  --longoptions create,delete,list,help,name:,image:,ram_mb:,cpus:,keys_file:,user:,pass_hash: \
+  --name "$(basename $0)" \
+  --options "" \
+  -- "$@")
+eval set -- $opts
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    # Operations
+    --create)
+      op=create
+      shift;;
+    --delete)
+      op=delete
+      shift;;
+    --list)
+      op=list
+      shift;;
+    --help)
+      op=help
+      shift;;
+    # Flags
+    --name)
+      name=$2
+      shift 2;;
+    --image)
+      image=$2
+      shift 2;;
+    --ram_mb)
+      ram_mb=$2
+      shift 2;;
+    --cpus)
+      cpus=$2
+      shift 2;;
+    --keys_file)
+      keys_file=$2
+      shift 2;;
+    --user)
+      user=$2
+      shift 2;;
+    --pass_hash)
+      pass_hash=$2
+      shift 2;;
+    *)
+      break;;
+  esac
+done
+
+# === Function definitions ===
+
+function create_vm() {
+  if [[ $name == '' ]]; then
+    name="$(uuidgen -r | cut -c 1-8)"
+  fi
+  # These are always derived from $name
+  disk="${disk_dir}/${name}.raw"
+  cidata="${disk_dir}/${name}-cidata.iso"
+
+  disk_base="${disk_base_dir}/${image}"
+  ssh_key="$(cat "$keys_file")"
+  domain="$(hostname -d)"
+  fqdn="${name}.${domain}"
+
+  cat <<_EOF_ > user-data
 #cloud-config
 preserve_hostname: False
-hostname: ${node_name}
-fqdn: ${node_name}.${domain}
+hostname: ${name}
+fqdn: ${fqdn}
 users:
   - name: ${user}
     shell: /bin/bash
@@ -145,36 +111,100 @@ users:
 runcmd:
   - [systemctl, restart, networking]
 _EOF_
+
+  echo "==================="
+  echo "Node name: ${name}"
+  echo "User name: ${user}"
+  echo "==================="
+  echo "RAM: $ram_mb MB"
+  echo "CPUs: $cpus"
+  echo "Disk base: ${disk_base}"
+  echo "Live VM disk image: ${disk}"
+  echo "User-data:"
+  cat user-data
+
+  echo
+  echo -n "OK? [y/N] "
+  read yesno
+
+  if [[ $yesno != "y" && $yesno != "yes" ]]; then
+    echo "Cancelled."
+    exit 1
+  fi
+   
+  cp "${disk_base}" "${disk}"
+  echo "instance-id: cloudinit-$name; local-hostname: $name" > meta-data
+  genisoimage -output ${cidata} -volid cidata -joliet -rock user-data meta-data
+  virt-install \
+    --import \
+    --name cloudinit-$name \
+    --os-variant debian7 \
+    --ram ${ram_mb} \
+    --vcpus ${cpus} \
+    --disk ${disk} \
+    --disk ${cidata},device=cdrom \
+    --network bridge=virbr0 \
+    --noautoconsole \
+    --graphics vnc
+}
+
+function delete_vm() {
+  if [[ $name == '' ]]; then
+    echo "--name is required"
+    exit 2
+  fi
+  # These are always derived from $name
+  disk="${disk_dir}/${name}.raw"
+  cidata="${disk_dir}/${name}-cidata.iso"
+ 
+  local dom=cloudinit-$name
+  echo "Will remove node: $dom"
+  echo "Disk image:"
+  ls -l "$disk"
+
+  echo -n "OK? [y/N] "
+  read yesno
+  if [[ $yesno != "y" && $yesno != "yes" ]]; then
+    echo "Cancelled."
+    exit 1
+  fi
+
+  virsh destroy $dom
+  virsh undefine $dom
+  rm -f $disk
+}
+
+function list_vms() {
+  sudo virsh list --name | grep ^cloudinit-
+}
+
+function help_and_exit() {
+  echo "Usage:"
+  echo "  $0 --create [options]"
+  echo "  $0 --list [options]"
+  echo "  $0 --delete --name <name> [options]"
+  echo "Options:"
+  echo "  --name <vm_name>"
+  echo "  --image <disk image>"
+  echo "   Always in ${disk_base_dir}"
+  echo "  --ram_mb <vm_ram_in_mb>"
+  echo "  --cpus <cpu_count>"
+  echo "  --keys_file <authorized_keys_file>"
+  echo "  --user <default user>"
+  echo "  --pass_hash <user_password_hash>"
+  exit 1
+}
+
+# === main ===
+if [[ $op == create ]]; then
+  create_vm
+elif [[ $op == delete ]]; then
+  delete_vm
+elif [[ $op == list ]]; then
+  list_vms
+elif [[ $op == help ]]; then
+  help_and_exit
+else
+  echo "Either --create, --delete, or --list is required"
+  exit 2
 fi
-
-echo "User-data:"
-$prefix cat ${ud_path}
-
-$prefix cp "${disk_path}" "${live_path}"
-echo "instance-id: $node_name; local-hostname: $node_name" > ${md_path}
-
-# The path is important here because we want to reference meta-data and
-# user-data by their basenames. (There might be some sort of base dir option we
-# can pass to genisoimage instead.)
-$prefix mkdir ${ci_iso_dir}
-pushd ${ci_iso_dir}
-$prefix genisoimage \
-  -output ${ci_iso_path} \
-  -volid cidata \
-  -joliet \
-  -rock meta-data user-data
-popd
-
-$prefix virt-install \
-  --import \
-  --name $node_name \
-  --ram ${ram_mb} \
-  --vcpus ${cpus} \
-  --disk $live_path \
-  --noautoconsole \
-  --graphics vnc \
-  --disk ${ci_iso_path},device=cdrom \
-  --network bridge=virbr0 \
-  --os-type=linux \
-  --os-variant=${os_variant}
-
