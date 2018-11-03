@@ -7,6 +7,11 @@
 # $ cloudinit.sh --delete --name node0
 #
 # See --help for options.
+#
+# Some notes on dependencies:
+# - This script expects a working `virsh` and `virt-install`
+# - This script disk_base_dir (where your base images live) and disk_dir (where
+#   your live VM images live) at the top -- you'll want to set those appropriately.
 
 set -e
 set -u
@@ -95,6 +100,8 @@ function create_vm() {
   domain="$(hostname -d)"
   fqdn="${name}.${domain}"
 
+  ls -l "${disk_base}"
+
   cat <<_EOF_ > user-data
 #cloud-config
 preserve_hostname: False
@@ -113,7 +120,7 @@ runcmd:
 _EOF_
 
   echo "==================="
-  echo "Node name: ${name}"
+  echo "Node name: ${name} ($fqdn)"
   echo "User name: ${user}"
   echo "==================="
   echo "RAM: $ram_mb MB"
@@ -133,7 +140,7 @@ _EOF_
   fi
    
   cp "${disk_base}" "${disk}"
-  echo "instance-id: cloudinit-$name; local-hostname: $name" > meta-data
+  echo -e "instance-id: cloudinit-$name\nlocal-hostname: $fqdn\n" > meta-data
   genisoimage -output ${cidata} -volid cidata -joliet -rock user-data meta-data
   virt-install \
     --import \
@@ -171,11 +178,11 @@ function delete_vm() {
 
   virsh destroy $dom
   virsh undefine $dom
-  rm -f $disk
+  rm -f $disk $cidata
 }
 
 function list_vms() {
-  sudo virsh list --name | grep ^cloudinit-
+  sudo virsh list --name | grep ^cloudinit- | sed 's/^cloudinit-//'
 }
 
 function help_and_exit() {
