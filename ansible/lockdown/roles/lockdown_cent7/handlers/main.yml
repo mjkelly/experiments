@@ -7,5 +7,4 @@
 
 - name: Reload firewalld
   service: name=firewalld state=reloaded
-  when: firewalld_conf.changed
   tags: [firewalld]
