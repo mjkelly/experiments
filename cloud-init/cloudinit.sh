@@ -30,10 +30,16 @@ op=''
 image=xenial-server-cloudimg-amd64-disk1.img
 ram_mb=1024
 cpus=1
-keys_file=$HOME/.ssh/authorized_keys
 user=cloud
 # This is just cloud123 :)
 pass_hash='$6$saltsalt$wVzOxp139jXJm2bHzpMAu/52NJLuaPceqzdvGa./Pxu5.amCga/iJsPLejmOHcd6/EAsslzKy79a49nP85FMR0'
+if [[ -n $SUDO_USER ]]; then
+  # if we were invoked via sudo, we almost certainly want $SUDO_USER's
+  # authorized_keys.
+  keys_file="$(getent passwd $SUDO_USER | cut -d: -f6)/.ssh/authorized_keys"
+else
+  keys_file=$HOME/.ssh/authorized_keys
+fi
 
 # === Flag parsing ===
 opts=$(getopt \
@@ -193,12 +199,15 @@ function help_and_exit() {
   echo "Options:"
   echo "  --name <vm_name>"
   echo "  --image <disk image>"
-  echo "   Always in ${disk_base_dir}"
+  echo "   Name of file in ${disk_base_dir}"
   echo "  --ram_mb <vm_ram_in_mb>"
   echo "  --cpus <cpu_count>"
   echo "  --keys_file <authorized_keys_file>"
   echo "  --user <default user>"
   echo "  --pass_hash <user_password_hash>"
+  echo
+  echo "Available disk images:"
+  ls -1 ${disk_base_dir}
   exit 1
 }
 
