@@ -10,7 +10,7 @@
 # (And Python 3, yarr!)
 #
 # Michael Kelly
-# Fri Mar 29 20:33:53 EDT 2013
+# Sun Jan 13 21:08:54 EST 2019
 
 import math
 import random
@@ -24,6 +24,10 @@ parser.add_argument('--sentences', type=int, default=10,
         help='How many sentences to print at once.')
 parser.add_argument('--simple', default=False, action='store_true',
         help='Simple mode: Use only lowercase words, without aprostrophes.')
+parser.add_argument('--dictionary', default='/usr/share/dict/words',
+        help='Dictionary file to use. We process the words in this list '
+        'somewhat, so we may not end up using all the words. Check the output '
+        'of the program.')
 args = parser.parse_args()
 
 def bits2length(bits):
@@ -33,11 +37,10 @@ def bits2length(bits):
 
 num_words = args.words
 num_sentences = args.sentences
-dictionary = '/usr/share/dict/words'
 
 total_word_count = 0
 words = []
-with open(dictionary, 'r') as fh:
+with open(args.dictionary, 'r') as fh:
   for line in fh.readlines():
     total_word_count += 1
     line = line.strip()
@@ -67,8 +70,8 @@ bits_per_phrase = sum([math.log(len(words) - n, 2) for n in range(num_words)])
 bits_per_pick = bits_per_phrase - math.log(num_sentences, 2)
 
 corresponding_pw = bits2length(bits_per_phrase)
-print("%d possible words (of %d in %s)." % (len(words), total_word_count, dictionary),
-      file=sys.stderr)
+print("%d possible words (of %d in %s)." % (len(words), total_word_count,
+    args.dictionary), file=sys.stderr)
 print("%d words per phrase (random but unique)." % num_words, file=sys.stderr)
 print("∴ %f bits of entropy for first word." % bits_for_first_word,
       file=sys.stderr)
