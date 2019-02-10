@@ -4,3 +4,8 @@ local-rsrc/
 
 ansible/postfix-relay/group_vars/all.yml
 ansible/postfix-relay/hosts
+
+terraform/providers/
+.terraform
+*.tfstate
+*.tfstate.backup
