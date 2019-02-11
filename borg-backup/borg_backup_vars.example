@@ -9,6 +9,8 @@ export BORG_PASSPHRASE='foo bar baz qux'
 # or this to ask an external program to supply the passphrase:
 #export BORG_PASSCOMMAND='pass show backup'
 
-# Set any extra options needed by borg here. (E.g. on rsync.net, this should be
-# "--remote-path=borg1".)
-export EXTRA_BORG_ARGS=--remote-path=borg1
+# Remote borg path. On rsync.net, this should be "borg1".
+export BORG_REMOTE_PATH=borg1
+
+# Set any extra options needed by borg here.
+export EXTRA_BORG_ARGS=
