@@ -1,0 +1,5 @@
+{%- import "base.j2" as base -%}
+
+{{ base.my_instance("chef") }}
+
+{{ base.my_instance("client", "t2.medium", tags=["foo"]) }}

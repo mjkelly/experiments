@@ -1,0 +1,19 @@
+{%- import "vars.j2" as vars -%}
+
+{% macro my_instance(name, size="t2.small", tags=[]) -%}
+resource "aws_instance" "{{ name }}" {
+  ami               = {{ vars.ami|json }}
+  instance_type     = "{{ size }}"
+  availability_zone = "{{ vars.az }}"
+  subnet_id         = "{{ vars.subnet }}"
+
+  key_name               = "{{ vars.key }}",
+  vpc_security_group_ids = [
+    "sg-cc5241a9"
+  ]
+  {% if tags -%}
+  tags = {{tags|json}}
+  {%- endif %}
+}
+{%- endmacro %}
+
