@@ -18,16 +18,17 @@ set -u
 
 # === Globals ===
 # Base images
-disk_base_dir=/var/lib/virt/cloud-init/disks
+disk_base_dir=/data/cloud-init
 # Live VM images
-disk_dir=/var/lib/virt/cloud-init
+disk_dir=/data/vms
 
 
 # === Default values for flags ===
 name=''
 op=''
 #image=debian-9.5.6-20181013-openstack-arm64.qcow2
-image=xenial-server-cloudimg-amd64-disk1.img
+#image=xenial-server-cloudimg-amd64-disk1.img
+image=ubuntu-19.04-server-cloudimg-amd64.img
 ram_mb=1024
 cpus=1
 user=cloud
