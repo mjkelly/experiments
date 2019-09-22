@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python3
 # -----------------------------------------------------------------
 # mved.py -- Renames files in the current directory through a text editor.
 # Copyright 2007 Michael Kelly (michael@michaelkelly.org)
@@ -59,7 +59,7 @@ def main(argv):
   
   tmpfd, tmpname = tempfile.mkstemp()
   for f in files:
-    os.write(tmpfd, f + "\n")
+    os.write(tmpfd, bytes(f + "\n", encoding='utf-8'))
   os.close(tmpfd)
 
   pid = os.fork()
@@ -67,21 +67,21 @@ def main(argv):
     # child
     try:
       os.execvp(editor, [editor, tmpname])
-    except RuntimeError, e:
-      print e
+    except RuntimeError as e:
+      print(e)
       sys.exit(1)
 
   # parent (child ends with execvp)
   w_pid, w_status = os.waitpid(pid, 0)
 
   if w_status != 0:
-    print "%s exited with nonzero status (%d). Aborting." % (editor, w_status)
+    print("%s exited with nonzero status (%d). Aborting." % (editor, w_status))
     sys.exit(2)
   
   tmp = open(tmpname, 'r')
   new_files = tmp.readlines()
   if len(new_files) != len(files):
-    print ("ERROR: You added or deleted a line. Don't do that. Use blank "
+    print("ERROR: You added or deleted a line. Don't do that. Use blank "
            "lines to delete files.")
     sys.exit(2)
 
@@ -92,10 +92,10 @@ def main(argv):
     old_file = files[i]
     if files[i] != new_file:
       if new_file != '':
-        print "RENAME: '%s' --> '%s'" % (old_file, new_file)
+        print("RENAME: '%s' --> '%s'" % (old_file, new_file))
         renames += 1
       else:
-        print "DELETE: '%s'" % old_file
+        print("DELETE: '%s'" % old_file)
         deletes += 1
   tmp.close()
 
@@ -107,11 +107,11 @@ def main(argv):
       "Rename %d files and delete %d files?" % (renames, deletes),
       default=False)
   else:
-    print "No changes."
+    print("No changes.")
     sys.exit(0)
 
   if not response:
-    print "No. Aborting."
+    print("No. Aborting.")
     sys.exit(1)
   
   for i, new_file in enumerate(new_files):
@@ -119,15 +119,15 @@ def main(argv):
     if old_file != new_file:
       try:
         if new_file != '':
-          print "RENAME: '%s' --> '%s'" % (old_file, new_file)
+          print("RENAME: '%s' --> '%s'" % (old_file, new_file))
           os.rename(old_file, new_file)
         else:
-          print "DELETE: '%s'" % old_file
+          print("DELETE: '%s'" % old_file)
           os.unlink(old_file)
-      except OSError, e:
-        print e
+      except OSError as e:
+        print(e)
   
-  print "Done."
+  print("Done.")
 
 if __name__ == '__main__':
   main(sys.argv)
