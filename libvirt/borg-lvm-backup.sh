@@ -32,11 +32,16 @@
 # - Restore each disk:
 #   `borg extract --stdout ::<archive-nme> <full_path_to_disk_backup> | \
 #      dd status=progress bs=10M of=/dev/<vg_name>/<lv_name>`
+#   The <vg_name> and <lv_name> will appear in the filenames of the backed up
+#   disks. Note that all LVs will have a "-snap" suffix -- don't include that.
 # - Restore the VM configuration:
 #   `borg extract --stdout ::<archive-nme> <full_path_to_vm_xml_file> > \
 #      /tmp/vm-restore.xml`
 # - Create the VM:
 #   `virsh define /tmp/vm-restore.xml`
+#  If you used --exclude-devs in the backup step, you may not have all the
+#  disks that the VM requires! You can either remove the disk definitions from
+#  the XML config file, or create new blank LVs for your restored VM.
 # 
 # You should now see a running VM if you run `virsh list`.
 #
