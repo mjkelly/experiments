@@ -25,6 +25,9 @@ set -u
 disk_base_dir=/data/cloud-init-kvm
 # Live VM images
 disk_vg=libvirt_lvm
+# VG to create data disks on. This can be the same as disk_vg, above, or it can
+# be different.
+data_disk_vg=libvirt_lvm_slow
 
 
 # === Default values for flags ===
@@ -35,6 +38,7 @@ image=ubuntu-19.04.raw
 ram_mb=1024
 cpus=1
 disk_size=25G
+data_disk_size=0
 user=cloud
 # This is just cloud123 :)
 pass_hash='$6$saltsalt$wVzOxp139jXJm2bHzpMAu/52NJLuaPceqzdvGa./Pxu5.amCga/iJsPLejmOHcd6/EAsslzKy79a49nP85FMR0'
@@ -48,7 +52,7 @@ fi
 
 # === Flag parsing ===
 opts=$(getopt \
-  --longoptions create,delete,list,help,name:,image:,ram_mb:,cpus:,disk-size:,keys_file:,user:,pass_hash: \
+  --longoptions create,delete,list,help,name:,image:,ram_mb:,cpus:,disk-size:,data-disk-size:,keys_file:,user:,pass_hash: \
   --name "$(basename $0)" \
   --options "" \
   -- "$@")
@@ -85,6 +89,9 @@ while [[ $# -gt 0 ]]; do
     --disk-size)
       disk_size=$2
       shift 2;;
+    --data-disk-size)
+      data_disk_size=$2
+      shift 2;;
     --keys_file)
       keys_file=$2
       shift 2;;
@@ -107,9 +114,11 @@ function create_vm() {
   fi
   # These are always derived from $name
   disk="cloudinit-${name}"
+  data_disk="cloudinit-${name}-data"
   cidata="cloudinit-${name}-cidata"
 
   disk_dev="/dev/${disk_vg}/${disk}"
+  data_disk_dev="/dev/${data_disk_vg}/${data_disk}"
   cidata_dev="/dev/${disk_vg}/${cidata}"
 
 
@@ -130,11 +139,11 @@ users:
     shell: /bin/bash
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
     lock_passwd: false
-    passwd: ${pass_hash}
+    passwd: '${pass_hash}'
     ssh_authorized_keys:
-      - ${ssh_key}
+      - '${ssh_key}'
 runcmd:
-  - [systemctl, restart, networking]
+  - ['systemctl', 'restart', 'networking']
 _EOF_
 
   echo "==================="
@@ -144,8 +153,10 @@ _EOF_
   echo "RAM: $ram_mb MB"
   echo "CPUs: $cpus"
   echo "Disk base: ${disk_base}"
-  echo "Disk size: ${disk_size}"
-  echo "Live VM disk image: ${disk_dev}"
+  echo "Root disk size: ${disk_size} (on ${disk_dev})"
+  if [[ $data_disk_size != "0" ]]; then
+    echo "Data Disk size: ${data_disk_size} (on ${data_disk_dev})"
+  fi
   echo "User-data:"
   cat user-data
 
@@ -162,6 +173,12 @@ _EOF_
   # automatically resize to the size of its disk on first boot.
   lvcreate --size ${disk_size} --name ${disk} ${disk_vg}
   lvcreate --size 4M --name ${cidata} ${disk_vg}
+  if [[ $data_disk_size != "0" ]]; then
+    lvcreate --size ${data_disk_size} --name ${data_disk} ${data_disk_vg}
+    data_disk_arg="--disk=${data_disk_dev}"
+  else
+    data_disk_arg=''
+  fi
 
   # populate new devices
   echo "Copying ${disk_base} to ${disk_dev}..."
@@ -170,15 +187,16 @@ _EOF_
   genisoimage -output ${cidata_dev} -volid cidata -joliet -rock user-data meta-data
   virt-install \
     --import \
-    --name cloudinit-$name \
-    --os-variant debian7 \
-    --ram ${ram_mb} \
-    --vcpus ${cpus} \
-    --disk ${disk_dev} \
-    --disk ${cidata_dev},device=cdrom \
-    --network bridge=virbr0 \
+    --name=cloudinit-$name \
+    --os-variant=debian7 \
+    --ram=${ram_mb} \
+    --vcpus=${cpus} \
+    --disk=${disk_dev} \
+    ${data_disk_arg} \
+    --disk=${cidata_dev},device=cdrom \
+    --network=bridge=virbr0 \
     --noautoconsole \
-    --graphics vnc
+    --graphics=vnc
 
   echo "To connect to the console, run:"
   echo "  virsh console cloudinit-${name}"
@@ -191,12 +209,29 @@ function delete_vm() {
   fi
   # These are always derived from $name
   disk="cloudinit-${name}"
+  data_disk="cloudinit-${name}-data"
   cidata="cloudinit-${name}-cidata"
- 
+
+  disk_dev="/dev/${disk_vg}/${disk}"
+  data_disk_dev="/dev/${data_disk_vg}/${data_disk}"
+  cidata_dev="/dev/${disk_vg}/${cidata}"
+
+  # Since we don't have our own metadata, we can either try to inspect the
+  # domain config, or just check for the data disk device. We check for the
+  # device.
+  if [[ ! -e "${data_disk_dev}" ]]; then
+    data_disk=""
+    data_disk_dev=""
+  fi
+
   local dom=cloudinit-$name
   echo "Will remove node: $dom"
-  echo "Disk image:"
+  echo "Root disk image:"
   lvdisplay "${disk_vg}/${disk}"
+  if [[ -n $data_disk ]]; then
+    echo "Data disk image:"
+    lvdisplay "${data_disk_vg}/${data_disk}"
+  fi
 
   echo -n "OK? [y/N] "
   read yesno
@@ -208,6 +243,9 @@ function delete_vm() {
   virsh destroy $dom
   virsh undefine $dom
   lvremove "${disk_vg}/${disk}"
+  if [[ -n $data_disk ]]; then
+    lvremove "${data_disk_vg}/${data_disk}"
+  fi
   lvremove "${disk_vg}/${cidata}"
 
 }
@@ -224,11 +262,15 @@ function help_and_exit() {
   echo "Options:"
   echo "  --name <vm_name>"
   echo "  --image <disk image>"
-  echo "   Name of file in ${disk_base_dir}"
+  echo "    Name of file in ${disk_base_dir}"
   echo "  --ram_mb <vm_ram_in_mb>"
   echo "  --cpus <cpu_count>"
   echo "  --disk-size <disk size>"
-  echo "    Format understood by LVM -- e.g., we support 'M' and 'G' suffix."
+  echo "    Size of the root disk. We accept any format understood by LVM:"
+  echo "    e.g., 'M' and 'G' suffixes."
+  echo "  --data-disk-size <disk size>"
+  echo "    Size of an additional data disk. Same format as --disk-size."
+  echo "    (We don't automatically mount this.)"
   echo "  --keys_file <authorized_keys_file>"
   echo "  --user <default user>"
   echo "  --pass_hash <user_password_hash>"
