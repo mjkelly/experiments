@@ -1,6 +1,11 @@
 #!/bin/bash
 # Creates a borg backup of a running libvirt VM backed by LVM. (This won't work
 # for VMs backed by other storage types!)
+#
+# The goal is to make a simple VM backup that can be restored at the hypervisor
+# level in one shot. It will be a large and clunky backup, and does not allow
+# for single-file restores. This is meant to help you recover from catastrophic
+# failures on your hypervisor.
 # 
 # The outline is this:
 # - Dump the XML configuration of the VM to disk
