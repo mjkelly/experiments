@@ -29,6 +29,14 @@ disk_vg=libvirt_lvm
 # be different.
 data_disk_vg=libvirt_lvm_slow
 
+# We add this prefix to all LVM disk names, so this script operates in its own
+# world, even if it shares a VG with other VMs. (Even if you try to delete a VM
+# this script didn't create, we'll only ever try to delete things beginning with
+# this prefix.) If you want to create a long-lived VM that you don't want to
+# share this prefix, you can set this to "", but don't mess around with this
+# blank.
+prefix="cloudinit-"
+
 
 # === Default values for flags ===
 name=''
@@ -113,9 +121,9 @@ function create_vm() {
     name="$(uuidgen -r | cut -c 1-8)"
   fi
   # These are always derived from $name
-  disk="cloudinit-${name}"
-  data_disk="cloudinit-${name}-data"
-  cidata="cloudinit-${name}-cidata"
+  disk="${prefix}${name}"
+  data_disk="${prefix}${name}-data"
+  cidata="${prefix}${name}-cidata"
 
   disk_dev="/dev/${disk_vg}/${disk}"
   data_disk_dev="/dev/${data_disk_vg}/${data_disk}"
@@ -183,11 +191,11 @@ _EOF_
   # populate new devices
   echo "Copying ${disk_base} to ${disk_dev}..."
   dd bs=2048 if=${disk_base} of=${disk_dev}
-  echo -e "instance-id: cloudinit-$name\nlocal-hostname: $fqdn\n" > meta-data
+  echo -e "instance-id: ${prefix}$name\nlocal-hostname: $fqdn\n" > meta-data
   genisoimage -output ${cidata_dev} -volid cidata -joliet -rock user-data meta-data
   virt-install \
     --import \
-    --name=cloudinit-$name \
+    --name=${prefix}$name \
     --os-variant=debian7 \
     --ram=${ram_mb} \
     --vcpus=${cpus} \
@@ -199,7 +207,7 @@ _EOF_
     --graphics=vnc
 
   echo "To connect to the console, run:"
-  echo "  virsh console cloudinit-${name}"
+  echo "  virsh console ${prefix}${name}"
 }
 
 function delete_vm() {
@@ -208,9 +216,9 @@ function delete_vm() {
     exit 2
   fi
   # These are always derived from $name
-  disk="cloudinit-${name}"
-  data_disk="cloudinit-${name}-data"
-  cidata="cloudinit-${name}-cidata"
+  disk="${prefix}${name}"
+  data_disk="${prefix}${name}-data"
+  cidata="${prefix}${name}-cidata"
 
   disk_dev="/dev/${disk_vg}/${disk}"
   data_disk_dev="/dev/${data_disk_vg}/${data_disk}"
@@ -224,7 +232,7 @@ function delete_vm() {
     data_disk_dev=""
   fi
 
-  local dom=cloudinit-$name
+  local dom=${prefix}$name
   echo "Will remove node: $dom"
   echo "Root disk image:"
   lvdisplay "${disk_vg}/${disk}"
@@ -251,7 +259,7 @@ function delete_vm() {
 }
 
 function list_vms() {
-  sudo virsh list --name | grep ^cloudinit- | sed 's/^cloudinit-//'
+  sudo virsh list --name | grep "^${prefix}" | sed "s/^${prefix}//"
 }
 
 function help_and_exit() {
