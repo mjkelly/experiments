@@ -1,11 +1,6 @@
 #!/bin/bash
 # Creates a borg backup of a running libvirt VM backed by LVM. (This won't work
 # for VMs backed by other storage types!)
-#
-# The goal is to make a simple VM backup that can be restored at the hypervisor
-# level in one shot. It will be a large and clunky backup, and does not allow
-# for single-file restores. This is meant to help you recover from catastrophic
-# failures on your hypervisor.
 # 
 # The outline is this:
 # - Dump the XML configuration of the VM to disk
@@ -14,7 +9,39 @@
 #
 # That's it!
 #
-# Here are the references I found helpeful while writing this:
+# GOALS:
+#
+# The goal is to make a simple VM backup that can be restored at the hypervisor
+# level in one shot. It will be a large and clunky backup, and does not allow
+# for single-file restores. This is meant to help you recover from catastrophic
+# failures on your hypervisor.
+#
+# RESTORE PROCEDURE:
+# 
+# You should be root for all of this.
+# 
+# - Get the exact sizes of the disks you'll be restoring:
+#   `borg list ::<archive_name>` tells you the size in bytes
+#   There should be one file for each disk, plus an .xml file with the VM
+#   configuration.
+# - Create the LVM restore destinations (for each disk):
+#   lvcreate --size <bytes>b --name <lv_name> <vg_name>
+#   ...
+#  'b' is the suffix that tells LVM to use bytes. (You need it, it's not the
+#  default!)
+# - Restore each disk:
+#   `borg extract --stdout ::<archive-nme> <full_path_to_disk_backup> | \
+#      dd status=progress bs=10M of=/dev/<vg_name>/<lv_name>`
+# - Restore the VM configuration:
+#   `borg extract --stdout ::<archive-nme> <full_path_to_vm_xml_file> > \
+#      /tmp/vm-restore.xml`
+# - Create the VM:
+#   `virsh define /tmp/vm-restore.xml`
+# 
+# You should now see a running VM if you run `virsh list`.
+#
+# REFERENCES:
+#
 # - https://blog.devzero.be/post/kvm-live-vm-backup/
 # - https://borgbackup.readthedocs.io/en/stable/deployment/image-backup.html
 
