@@ -190,7 +190,7 @@ _EOF_
 
   # populate new devices
   echo "Copying ${disk_base} to ${disk_dev}..."
-  dd bs=2048 if=${disk_base} of=${disk_dev}
+  dd status=progress bs=2048 if=${disk_base} of=${disk_dev}
   echo -e "instance-id: ${prefix}$name\nlocal-hostname: $fqdn\n" > meta-data
   genisoimage -output ${cidata_dev} -volid cidata -joliet -rock user-data meta-data
   virt-install \
