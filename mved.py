@@ -8,36 +8,51 @@
 # of the License, or (at your option) any later version.
 #
 # Sun Feb  7 13:38:06 EST 2010
-# Updated Sun Jul  8 03:11:00 EDT 2018
+# Updated Sat Nov  2 22:00:17 EDT 2019
 # -----------------------------------------------------------------
 
 import sys
 import os
 import tempfile
-import optparse
+import argparse
 
 
 def sorted_file_list(directory, all=False):
     '''Get a sorted list of the files in the given directory.
 
-  Args:
-    all: if true, include hidden (dot) files.
-  '''
+    Args:
+      all: if true, include hidden (dot) files.
+    '''
     files = os.listdir(directory)
-
     if not all:
         files = [f for f in files if not f.startswith('.')]
-
     files.sort()
     return files
 
 
 def get_editor():
-    '''Try to get the user's editor from $EDITOR and $VISUAL.
-
-  If those aren't set, fall back on 'vi'.
-  '''
+    '''Try to determine the user's preferred editor'''
     return os.getenv('EDITOR', os.getenv('VISUAL', 'vi'))
+
+
+def update_files(old_files, new_files, dry_run=True):
+    renames, deletes = 0, 0
+    for i, new_file in enumerate(new_files):
+        old_file = old_files[i]
+        if old_files[i] != new_file:
+            if new_file != '':
+                renames += 1
+                if dry_run:
+                    print('  mv %s %s' % (old_file, new_file))
+                else:
+                    os.rename(old_file, new_file)
+            else:
+                deletes += 1
+                if dry_run:
+                    print('  rm %s' % old_file)
+                else:
+                    os.unlink(old_file)
+    return renames, deletes
 
 
 def confirm(msg, default=False):
@@ -49,24 +64,22 @@ def confirm(msg, default=False):
 
 
 def main(argv):
-    parser = optparse.OptionParser()
-    parser.add_option(
-        "-a",
-        action="store_true",
-        dest="list_all",
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-a',
+        default=False,
+        action='store_true',
+        dest='list_all',
         help='List all files (including dotfiles; excluding "." and "..").')
-    parser.set_defaults(list_all=False)
-
-    opts, args = parser.parse_args()
+    args = parser.parse_args()
 
     cwd = os.getcwd()
-
-    files = sorted_file_list(cwd, opts.list_all)
+    files = sorted_file_list(cwd, args.list_all)
     editor = get_editor()
 
     tmpfd, tmpname = tempfile.mkstemp()
     for f in files:
-        os.write(tmpfd, bytes(f + "\n", encoding='utf-8'))
+        os.write(tmpfd, bytes(f + '\n', encoding='utf-8'))
     os.close(tmpfd)
 
     pid = os.fork()
@@ -77,65 +90,35 @@ def main(argv):
         except RuntimeError as e:
             print(e)
             sys.exit(1)
-
     # parent (child ends with execvp)
     w_pid, w_status = os.waitpid(pid, 0)
-
     if w_status != 0:
-        print("%s exited with nonzero status (%d). Aborting." % (editor,
+        print('%s exited with nonzero status (%d). Aborting.' % (editor,
                                                                  w_status))
         sys.exit(2)
 
-    tmp = open(tmpname, 'r')
-    new_files = tmp.readlines()
-    if len(new_files) != len(files):
-        print("ERROR: You added or deleted a line. Don't do that. Use blank "
-              "lines to delete files.")
-        sys.exit(2)
-
+    with open(tmpname, 'r') as tmp:
+        new_files = tmp.readlines()
+        if len(new_files) != len(files):
+            print(
+                "ERROR: You added or deleted a line. Don't do that. Use blank "
+                'lines to delete files.')
+            sys.exit(2)
+    os.unlink(tmpname)
     new_files = [f.rstrip('\n\r') for f in new_files]
 
-    renames, deletes = 0, 0
-    for i, new_file in enumerate(new_files):
-        old_file = files[i]
-        if files[i] != new_file:
-            if new_file != '':
-                print("RENAME: '%s' --> '%s'" % (old_file, new_file))
-                renames += 1
-            else:
-                print("DELETE: '%s'" % old_file)
-                deletes += 1
-    tmp.close()
-
-    os.unlink(tmpname)
-
-    response = False
-    if renames + deletes > 0:
-        response = confirm(
-            "Rename %d files and delete %d files?" % (renames, deletes),
-            default=False)
-    else:
-        print("No changes.")
+    renames, deletes = update_files(files, new_files, dry_run=True)
+    if renames + deletes == 0:
+        print('No changes.')
         sys.exit(0)
-
-    if not response:
-        print("No. Aborting.")
+    proceed = confirm(
+        'Will rename %d and delete %d files. Proceed? ' % (renames, deletes),
+        default=False)
+    if not proceed:
+        print('No. Aborting.')
         sys.exit(1)
-
-    for i, new_file in enumerate(new_files):
-        old_file = files[i]
-        if old_file != new_file:
-            try:
-                if new_file != '':
-                    print("RENAME: '%s' --> '%s'" % (old_file, new_file))
-                    os.rename(old_file, new_file)
-                else:
-                    print("DELETE: '%s'" % old_file)
-                    os.unlink(old_file)
-            except OSError as e:
-                print(e)
-
-    print("Done.")
+    renames, deletes = update_files(files, new_files, dry_run=False)
+    print('Renamed %d and deleted %d files.' % (renames, deletes))
 
 
 if __name__ == '__main__':
