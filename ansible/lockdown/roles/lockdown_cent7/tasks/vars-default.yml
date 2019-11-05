@@ -1,0 +1,6 @@
+---
+# We set these to true in OS-specific vars-* files.
+centos7: false
+centos8: false
+# iptables is simpler to get working. Default to it.
+fail2ban_iptables: true

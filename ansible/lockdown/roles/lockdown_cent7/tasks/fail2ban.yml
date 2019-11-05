@@ -25,8 +25,9 @@
   register: fail2ban_ssh_rule
   changed_when: false
   tags: [fail2ban]
+  when: not fail2ban_iptables
 
 - name: Restart fail2ban to reinstate fail2ban-ssh rules
   service: name=fail2ban state=restarted enabled=yes
-  when: fail2ban_ssh_rule.rc
+  when: not fail2ban_iptables and fail2ban_ssh_rule.rc
   tags: [fail2ban]

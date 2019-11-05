@@ -1,9 +1,18 @@
 ---
+- name: Include default vars
+  include_vars: vars-default.yml
+  tags: [vars]
+- name: Include distro specific vars
+  include_vars: "{{ item }}"
+  with_first_found:
+    - "vars-{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
+    - "vars-{{ ansible_distribution }}.yml"
+  tags: [vars]
 - import_tasks: rootpw.yml
 - import_tasks: ssh.yml
 - import_tasks: selinux.yml
 - import_tasks: firewalld.yml
-- import_tasks: yum-cron.yml
+- import_tasks: auto-updates.yml
 - import_tasks: epel.yml
 # We must put fail2ban after firewalld because fail2ban relies on setting some
 # firewalld state.
