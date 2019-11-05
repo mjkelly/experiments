@@ -1,12 +1,12 @@
 ---
-- name: Check we aren't using root to provision
+- name: ssh | Check we aren't using root to provision
   shell: printenv SUDO_USER
   register: sudo_user
   changed_when: false
   failed_when: sudo_user.stdout == '' or sudo_user.stdout == 'root'
   tags: [ssh, check]
 
-- name: Disallow root login via SSH
+- name: ssh | Disallow root login
   lineinfile:
     path: /etc/ssh/sshd_config
     regexp: "^#?\\w*PermitRootLogin"

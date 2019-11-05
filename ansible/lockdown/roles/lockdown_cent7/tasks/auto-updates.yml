@@ -2,21 +2,23 @@
 # This is based on a nice explanation here: 
 # https://serversforhackers.com/c/automatic-security-updates-centos
 
-- name: Install yum-cron
+# yum-cron for centos 7
+- name: yum-cron | Install
   package: name=yum-cron state=present
   tags: [auto-updates]
   when: centos7
 
-- name: Enable yum-cron
-  service: name=yum-cron state=started enabled=yes
-  tags: [auto-updates]
-  when: centos7
-
-- name: Update yum-cron template
+- name: yum-cron | Configure
   template: src=yum-cron.conf.j2 dest=/etc/yum/yum-cron.conf
   tags: [auto-updates]
   when: centos7
 
+- name: yum-cron | Enable, Start
+  service: name=yum-cron state=started enabled=yes
+  tags: [auto-updates]
+  when: centos7
+
+# dnf-automatic for centos 8
 - name: dnf-automatic | Install
   package: name=dnf-automatic state=present
   tags: [auto-updates]

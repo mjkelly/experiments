@@ -1,17 +1,17 @@
 ---
 # Install and enable fail2ban
 
-- name: Install fail2ban
+- name: fail2ban | Install
   package: name=fail2ban state=present
   tags: [fail2ban]
 
-- name: Enable SSH jail
+- name: fail2ban | Configure
   template: src=local-sshd.conf.j2 dest=/etc/fail2ban/jail.d/local-sshd.conf
   register: jails
   notify: [Reload fail2ban]
   tags: [fail2ban]
 
-- name: Start fail2ban
+- name: fail2ban | Enable, Start
   service: name=fail2ban state=started enabled=yes
   tags: [fail2ban]
 
@@ -19,7 +19,7 @@
 # from IPs in the fail2ban-sshd ipset, we won't block any banned traffic. Do a
 # crude check for the rule here and restart fail2ban (which will reinstate the
 # rule) if necessary.
-- name: Check fail2ban-ssh rule in firewalld
+- name: fail2ban | Check fail2ban-ssh rule in firewalld
   shell: firewall-cmd --direct --get-all-rules | grep fail2ban-sshd
   ignore_errors: true
   register: fail2ban_ssh_rule
@@ -27,7 +27,7 @@
   tags: [fail2ban]
   when: not fail2ban_iptables
 
-- name: Restart fail2ban to reinstate fail2ban-ssh rules
+- name: fail2ban | Restart to reinstate fail2ban-ssh rules
   service: name=fail2ban state=restarted enabled=yes
   when: not fail2ban_iptables and fail2ban_ssh_rule.rc
   tags: [fail2ban]

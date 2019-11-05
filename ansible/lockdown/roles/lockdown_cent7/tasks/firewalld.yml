@@ -1,19 +1,19 @@
 ---
-- name: Install firewalld
+- name: firewalld | Install
   package: name=firewalld state=present
   tags: [firewalld]
 
-- name: Write firewalld.conf
+- name: firewalld | Configure
   template: src=firewalld.conf.j2 dest=/etc/firewalld/firewalld.conf
   notify: [Reload firewalld]
   tags: [firewalld]
 
-- name: Write public zone def
+- name: firewalld | Public zone def
   template: src=firewalld-public.xml.j2 dest=/etc/firewalld/zones/public.xml
   notify: [Reload firewalld]
   tags: [firewalld]
 
-- name: Start firewalld
+- name: firewalld | Enable, Start
   service: name=firewalld state=started enabled=yes
   tags: [firewalld]
 

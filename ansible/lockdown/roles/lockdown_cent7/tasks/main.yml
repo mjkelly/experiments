@@ -1,8 +1,8 @@
 ---
-- name: Include default vars
+- name: vars | Default
   include_vars: vars-default.yml
   tags: [vars]
-- name: Include distro specific vars
+- name: vars | OS-Specific
   include_vars: "{{ item }}"
   with_first_found:
     - "vars-{{ ansible_distribution }}-{{ ansible_distribution_major_version}}.yml"
