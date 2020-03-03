@@ -1,0 +1,7 @@
+---
+node_exporter_version: 0.18.1
+# Format: <type>:<checksum>. E.g., "sha256:<blah>"
+# You'll probably get this from:
+# https://prometheus.io/download/#node_exporter
+node_exporter_checksum: sha256:b2503fd932f85f4e5baf161268854bf5d22001869b84f00fd2d1f57b51b72424
+systemd_dir: /lib/systemd

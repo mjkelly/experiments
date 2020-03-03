@@ -1,0 +1,5 @@
+---
+- name: Set up node_exporter
+  hosts: all
+  roles:
+    - exporter

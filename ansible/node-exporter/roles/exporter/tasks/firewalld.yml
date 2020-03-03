@@ -1,0 +1,8 @@
+---
+- name: firewalld | Open port
+  firewalld:
+    port: 9100/tcp
+    permanent: yes
+    immediate: yes
+    state: enabled
+  when: has_firewalld
