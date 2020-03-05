@@ -1,4 +1,0 @@
----
-centos8: true
-# I couldn't get firewallcmd working in Centos 8, so we keep iptables.
-fail2ban_iptables: true

@@ -1,8 +1,0 @@
-[all]
-# Use sudo (don't ssh as root)
-foo.example.com ansible_become=true
-# Optionally, you may want to set the user:
-#foo2.example.com ansible_become=true ansible_user=mkelly
-# If you don't have a python binary named 'python' (such as if you're on a
-# python3-only system!), you can set the python interpreter:
-#foo3.example.com ansible_become=true ansible_python_interpreter=/usr/bin/python3

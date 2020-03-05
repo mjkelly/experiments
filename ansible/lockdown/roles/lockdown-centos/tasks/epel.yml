@@ -1,6 +1,0 @@
----
-# EPEL contains fail2ban.
-
-- name: EPEL | Enable
-  package: name=epel-release state=present
-  tags: [epel]

@@ -1,4 +1,0 @@
----
-- name: rootpw | Disable
-  user: name=root password="!!"
-  tags: [rootpw]
