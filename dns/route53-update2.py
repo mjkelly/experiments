@@ -43,6 +43,7 @@ def get_ip():
 
 def get_rr_from_dns(client, zone_id, domain):
     response = client.list_resource_record_sets(HostedZoneId=zone_id)
+    logger.debug(f"list_resource_record_sets({zone_id}) => {response}")
     for rr in response['ResourceRecordSets']:
         if rr['Name'] == domain and rr['Type'] == 'A':
             return rr
@@ -72,6 +73,7 @@ def update_dns(client, zone_id, rrs):
                 'ResourceRecordSet': rrs,
             }]
         })
+    logger.debug(f"change_resource_record_sets({zone_id}) => {response}")
 
 
 @click.command()
@@ -80,7 +82,9 @@ def update_dns(client, zone_id, rrs):
     type=click.Choice(["CRITICAL", "ERROR", "WARNING", "INFO", "DEBUG"]),
     default="WARNING",
     show_default=True,
-    help="Zone ID to update")
+    callback=lambda ctx, param, val: logger.setLevel(val),
+    expose_value=False,
+    help="Set the log level")
 @click.option("--zone-id", type=str, required=True, help="Zone ID to update")
 @click.option(
     "--domain",
@@ -99,7 +103,7 @@ def update_dns(client, zone_id, rrs):
     is_flag=True,
     default=False,
     help="Don't actually do the thing. Usually useful with --log-level INFO")
-def main(log_level, zone_id, domain, ttl, dry_run):
+def main(zone_id, domain, ttl, dry_run):
     """Updates an AWS Route53 DNS name with this host's current IP.
 
     We use an external service to get the current IP, and update the IP in
@@ -129,9 +133,9 @@ def main(log_level, zone_id, domain, ttl, dry_run):
     Here's an example: Use the "dns" profile:
         AWS_PROFILE=dns ./route53-update2.py [flags]
     """
-    logger.setLevel(log_level)
     if not domain.endswith('.'):
-        raise click.UsageError("--domain must be fully-qualified, ending with '.'")
+        raise click.UsageError(
+            "--domain must be fully-qualified, ending with '.'")
     if dry_run:
         logger.info(f"Dry run mode. Will not make changes.")
     client = boto3.client('route53')
@@ -153,6 +157,7 @@ def main(log_level, zone_id, domain, ttl, dry_run):
         logger.info("Would update IP.")
     else:
         update_dns(client, zone_id, new_rrs)
+        logger.info("IP updated")
 
 
 if __name__ == "__main__":
