@@ -1,9 +1,9 @@
-.DEFAULT_GOAL := venv/install
+all: venv/install  ## [default] Set up local environment
 
-venv: ## Set up virtualenv
+venv: ## Create virtualenv
 	python3 -m venv venv
 
-venv/install: venv requirements.txt ## [default] Install packages in venv.
+venv/install: venv requirements.txt ## Install packages in venv.
 	./venv/bin/pip3 install -r requirements.txt
 	touch venv/install
 
