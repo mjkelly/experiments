@@ -35,8 +35,9 @@ logger = logging.getLogger()
     default="INFO",
     show_default=True,
     callback=lambda ctx, param, val: logger.setLevel(val),
+    expose_value=False,
     help="Set the log level")
-def main(log_level):
+def main():
     """Does some stuff.
 
     Examples:
