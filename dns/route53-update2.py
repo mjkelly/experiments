@@ -27,7 +27,8 @@ import logging
 import socket
 import sys
 
-IP_SERVICE_URL = "https://ipv4.icanhazip.com"
+# https://www.rdegges.com/2018/to-30-billion-and-beyond/
+IP_SERVICE_URL = "https://api.ipify.org"
 
 # Format inspired by glog
 logging.basicConfig(
