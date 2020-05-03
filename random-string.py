@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 # -----------------------------------------------------------------
 # random-string.py -- Generates a random printable string.
 # Copyright 2013 Michael Kelly (michael@michaelkelly.org)
@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-# Thu Aug 29 00:01:30 EDT 2013
+# Sat May  2 22:18:51 EDT 2020
 # -----------------------------------------------------------------
 
 import math
@@ -94,14 +94,13 @@ bits_per_char = math.log(len(chars), 2)
 total_bits = bits_per_char * password_length
 
 if not args.quiet:
-    print '%d characters long.' % password_length
-    print 'Choosing from %d characters. %2.3f bits of entropy per character.' % (
-        len(chars), bits_per_char)
-    print '%2.3f total bits of entropy for password.' % total_bits
-    print
-    print 'Password:'
+    print(f'{password_length} characters long.')
+    print('Choosing from %d characters. %2.3f bits of entropy per character.' % (
+        len(chars), bits_per_char))
+    print('%2.3f total bits of entropy for password.' % total_bits)
+    print('\nPassword:')
 
 r = random.SystemRandom()
 
-string = ''.join([r.choice(chars) for _ in xrange(password_length)])
-print string
+string = ''.join([r.choice(chars) for _ in range(password_length)])
+print(string)
