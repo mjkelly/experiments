@@ -54,12 +54,17 @@ parser.add_argument(
     nargs='?',
     type=int,
     help='Number of characters in password.')
+parser.add_argument(
+    '--setting',
+    default='default',
+    choices=['default', 'chasebank'],
+    help=("Use a particular set of special characters to satisfy password "
+    "requirements. This just controls special characters for now, it doesn't "
+    "cover repetition rules, etc."))
 args = parser.parse_args()
 
 chars_numeric = list('0123456789')
-
 chars_loweralpha = list('abcdefghijklmnopqrstuvwxyz' '0123456789')
-
 # This is included only if --loweralphanum is false.
 chars_upperalpha = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 
@@ -68,6 +73,9 @@ chars_upperalpha = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 # type on most keyboards. I'm skipping: $, which is US-centric. This isn't
 # scientific; it's just guessing, based on me staring at my Thinkpad keyboard.
 chars_symbols = list('~!@#%^&*()-_=+' '[]{}|;:<>,./?')
+
+if args.setting == 'chasebank':
+    chars_symbols = list('@!#$%+/=~')
 
 if args.loweralphanum and args.alphanum:
     raise Exception('Cannot specify both --loweralphanum and --alphanum!')
