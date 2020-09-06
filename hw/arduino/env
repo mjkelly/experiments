@@ -1,0 +1,2 @@
+arduino_tty=/dev/ttyUSB0
+arduino_fqbn=arduino:avr:diecimila
