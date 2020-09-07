@@ -26,6 +26,14 @@ void setup() {
   pinMode(LED_PIN, OUTPUT);
   pinDebouncer.begin();
   Serial.begin(9600);
+
+  // Make sure we start in the correct state
+  int buttonState = digitalRead(BUTTON_PIN);
+  if (buttonState == HIGH)  {
+    onPinDeactivated(BUTTON_PIN);
+  } else {
+    onPinActivated(BUTTON_PIN);
+  }
 }
 
 void loop() {
