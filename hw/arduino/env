@@ -1,2 +1,2 @@
-arduino_tty=/dev/ttyUSB0
+arduino_tty=$(ls -1 /dev/ttyUSB?)
 arduino_fqbn=arduino:avr:diecimila
