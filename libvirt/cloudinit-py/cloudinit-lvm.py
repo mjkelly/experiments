@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 """
 A helper for creating cloudinit VMs. We use LVM storage, so we expect
 $disk_vg (below) to exist and be a recognized storage pool.
