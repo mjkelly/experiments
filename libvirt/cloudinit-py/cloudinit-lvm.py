@@ -20,7 +20,7 @@ import os.path
 import pwd
 import subprocess
 import sys
-import uuid
+import random
 
 from absl import app
 from absl import flags
@@ -136,10 +136,14 @@ def _get_ssh_key():
         )
     return key
 
+def _random_hostname():
+    chars = list("abcdefghijklmnopqrstuvwxyz")
+    r = random.SystemRandom()
+    return ''.join([r.choice(chars) for _ in range(6)])
 
 def do_create():
     if FLAGS.name is None:
-        FLAGS.name = str(uuid.uuid1())[:8]
+        FLAGS.name = _random_hostname()
         logging.info(f'Auto-generating name {FLAGS.name}')
 
     logging.info(f"CREATE {FLAGS.name}")
