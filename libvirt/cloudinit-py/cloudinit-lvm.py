@@ -176,8 +176,9 @@ users:
     ssh_authorized_keys:
       - '{ssh_key}'
 runcmd:
-  - ['systemctl', 'restart', 'networking']
-  - ['systemctl', 'restart', 'systemd-networkd']
+  - 'systemctl is-enabled networking && systemctl restart networking'
+  - 'systemctl is-enabled systemd-networkd && systemctl restart systemd-networkd'
+  - 'exit 0'
 """
 
     print("===================\n"
