@@ -55,7 +55,7 @@ flags.DEFINE_boolean('create', False, 'Create a VM')
 flags.DEFINE_boolean('delete', False, 'Delete a VM')
 flags.DEFINE_boolean('list', False, 'List VMs')
 flags.DEFINE_string('name', None, 'Name of VM')
-flags.DEFINE_string('image', 'ubuntu-19.04.raw', 'Disk image to use')
+flags.DEFINE_string('image', 'ubuntu-20.04.raw', 'Disk image to use')
 flags.DEFINE_integer('ram_mb', 1024, 'RAM for VM, in MB')
 flags.DEFINE_integer('cpus', 1, 'CPUs for VM')
 flags.DEFINE_string('disk_size', '25G',
@@ -64,10 +64,11 @@ flags.DEFINE_string(
     'data_disk_size', '0',
     'Size of data disk of VM, if not "0"; can use M, G, etc, suffix')
 flags.DEFINE_string('user', 'cloud', 'User to create')
+flags.DEFINE_boolean('password', False, 'If true, set a password for this user. Otherwise, lock the password.')
 flags.DEFINE_string(
     'pass_hash',
     '$6$saltsalt$wVzOxp139jXJm2bHzpMAu/52NJLuaPceqzdvGa./Pxu5.amCga/iJsPLejmOHcd6/EAsslzKy79a49nP85FMR0',
-    'Hash of password for user; default is the hash of "cloud123"')
+    'Hash of password for user; ONLY USED IF YOU ALSO PASS --password. Default is the hash of "cloud123"')
 flags.DEFINE_boolean('clean_up', False, 'Cleanup temp files')
 flags.DEFINE_boolean('dry_run', False, 'Do not run shell commands')
 
@@ -160,6 +161,8 @@ def do_create():
 
     disk_base = f"{disk_base_dir}/{FLAGS.image}"
     ssh_key = _get_ssh_key()
+    lock_passwd = str(not FLAGS.password).lower()
+    pass_hash = FLAGS.pass_hash if FLAGS.password else '!!'
     userdata = f"""#cloud-config
 preserve_hostname: False
 hostname: {name}
@@ -168,8 +171,8 @@ users:
   - name: {FLAGS.user}
     shell: /bin/bash
     sudo: ['ALL=(ALL) NOPASSWD:ALL']
-    lock_passwd: false
-    passwd: '{FLAGS.pass_hash}'
+    lock_passwd: {lock_passwd}
+    passwd: '{pass_hash}'
     ssh_authorized_keys:
       - '{ssh_key}'
 runcmd:
