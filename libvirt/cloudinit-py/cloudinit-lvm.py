@@ -160,7 +160,7 @@ def do_create():
     userdata = f"""#cloud-config
 preserve_hostname: False
 hostname: {name}
-fqdn: '{fqdn}'
+fqdn: {fqdn}
 users:
   - name: {FLAGS.user}
     shell: /bin/bash
@@ -171,6 +171,7 @@ users:
       - '{ssh_key}'
 runcmd:
   - ['systemctl', 'restart', 'networking']
+  - ['systemctl', 'restart', 'systemd-networkd']
 """
 
     print("===================\n"
