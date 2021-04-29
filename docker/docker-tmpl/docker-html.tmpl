@@ -1,0 +1,33 @@
+<html>
+<head>
+<title>Docker containers on {{hostname}}</title>
+<style>
+table {
+  width: 90%;
+} 
+table, th, td {
+  border: 1px solid black;
+  
+} 
+</style>
+</head>
+<body>
+
+<h1>Docker containers on {{hostname}}</h1>
+<table>
+<tr>
+  <th>Name</th>
+  <th>ID</th>
+</tr>
+{% for c in containers %}
+<tr>
+  <td>{{ c.name }}</td>
+  <td>{{ c.id }}</td>
+</tr>
+{% endfor %}
+</table>
+
+<small>As of {{now}}</small>
+
+</body>
+</html>

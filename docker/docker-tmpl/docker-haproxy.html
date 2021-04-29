@@ -1,0 +1,68 @@
+{%- set http_port_by_id = {} -%}
+{%- set tls_port_by_id = {} -%}
+{%- for c in containers -%}
+	{%- set http_port = c.labels.get('http-port', '').strip() -%}
+	{%- set tls_port = c.labels.get('tls-port', '').strip() -%}
+	{%- set ports = c.attrs['HostConfig']['PortBindings'].keys() -%}
+	{%- for port in ports -%}
+		{%- set portnum = port.split('/')[0] -%}
+		{%- if portnum == http_port -%}
+			{%- set _ = http_port_by_id.update({c.id: portnum}) -%}
+		{%- elif portnum == tls_port -%}
+			{%- set _ = tls_port_by_id.update({c.id: portnum}) -%}
+		{%- endif -%}
+	{%- endfor -%}
+{%- endfor -%}
+
+global
+    daemon
+    maxconn 4096
+
+defaults
+    mode http
+    timeout connect 5000ms
+    timeout client 50000ms
+    timeout server 50000ms
+    log	global
+    mode http
+    option httplog
+    option dontlognull
+    option forwardfor
+    option  http-server-close
+
+frontend http-in
+    bind *:80
+    {%- if tls_cert %}
+    bind *:443 ssl crt {{tls_cert}}
+    {%- endif %}
+
+{% for c in containers -%}
+    {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
+    acl is_{{loop.index}}_{{c.name}} hdr_end(host) -i {{c.name}}.{{domain}}
+    {%- endif %}
+{%- endfor -%}
+{%- for c in containers -%}
+    {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
+    use_backend be{{loop.index}}_{{c.name}} if is_{{loop.index}}_{{c.name}}
+    {%- endif %}
+{%- endfor %}
+
+{% for c in containers %}
+    {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
+backend be{{ loop.index }}_{{ c.name }}
+	balance roundrobin
+	option httpclose
+	option forwardfor
+        {%- if http_port_by_id[c.id] %}
+	server 1 {{backend_host}}:{{ http_port_by_id[c.id] }} check maxconn 32
+        {%- endif %}
+        {%- if tls_port_by_id[c.id] %}
+	server 1 {{backend_host}}:{{ tls_port_by_id[c.id] }} check ssl verify none maxconn 32
+        {%- endif %}
+    {%- endif %}
+{% endfor %}
+
+listen admin
+    bind *:8090
+    stats enable
+    stats uri /
