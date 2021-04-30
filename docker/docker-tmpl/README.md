@@ -18,14 +18,14 @@ To set up, `make`. This will install the packages you need into a virtualenv.
 
 From the docker-tmpl directory, type:
 ```
-./venv/bin/python3 ./generate-cfg --help
+./venv/bin/python3 ./generate-cfg.py --help
 ```
 
 Here are some example invocations:
 
 Generate an HTML report of running containers:
 ```
-./venv/bin/python3 ./generate-cfg \
+./venv/bin/python3 ./generate-cfg.py \
   --template docker-html.tmpl \
   > $HOME/docker-report.html
 ```
