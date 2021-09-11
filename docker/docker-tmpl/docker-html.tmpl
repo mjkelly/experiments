@@ -1,9 +1,24 @@
+{%- set http_port_by_id = {} -%}
+{%- set tls_port_by_id = {} -%}
+{%- for c in containers -%}
+	{%- set http_port = c.labels.get('http-port', '').strip() -%}
+	{%- set tls_port = c.labels.get('tls-port', '').strip() -%}
+	{%- set ports = c.attrs['HostConfig']['PortBindings'].keys() -%}
+	{%- for port in ports -%}
+                {%- set portnum = c.attrs['HostConfig']['PortBindings'][port][0]['HostPort'] -%}
+		{%- if portnum == http_port -%}
+			{%- set _ = http_port_by_id.update({c.id: portnum}) -%}
+		{%- elif portnum == tls_port -%}
+			{%- set _ = tls_port_by_id.update({c.id: portnum}) -%}
+		{%- endif -%}
+	{%- endfor -%}
+{%- endfor -%}
 <html>
 <head>
 <title>Docker containers on {{hostname}}</title>
 <style>
 table {
-  width: 90%;
+  width: 75%;
 } 
 table, th, td {
   border: 1px solid black;
@@ -13,16 +28,22 @@ table, th, td {
 </head>
 <body>
 
-<h1>Docker containers on {{hostname}}</h1>
+<h1>Docker containers under {{domain}}</h1>
 <table>
 <tr>
   <th>Name</th>
-  <th>ID</th>
+  <th>Created</th>
+  <th>Image</th>
 </tr>
 {% for c in containers %}
 <tr>
-  <td>{{ c.name }}</td>
-  <td>{{ c.id }}</td>
+  {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
+    <td><a href="https://{{ c.name }}.{{ domain }}">{{ c.name }}</a></td>
+  {%- else %}
+    <td>{{ c.name }}</td>
+  {%- endif %}
+  <td>{{ c.attrs['Created'] }}</td>
+  <td>{{ c.attrs['Config']['Image'] }}</td>
 </tr>
 {% endfor %}
 </table>
