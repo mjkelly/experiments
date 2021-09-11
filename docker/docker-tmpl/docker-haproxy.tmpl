@@ -5,7 +5,7 @@
 	{%- set tls_port = c.labels.get('tls-port', '').strip() -%}
 	{%- set ports = c.attrs['HostConfig']['PortBindings'].keys() -%}
 	{%- for port in ports -%}
-		{%- set portnum = port.split('/')[0] -%}
+                {%- set portnum = c.attrs['HostConfig']['PortBindings'][port][0]['HostPort'] -%}
 		{%- if portnum == http_port -%}
 			{%- set _ = http_port_by_id.update({c.id: portnum}) -%}
 		{%- elif portnum == tls_port -%}
