@@ -1,9 +1,7 @@
 #!/usr/bin/python3
 
 import datetime
-import os
 import socket
-import sys
 
 import docker
 import jinja2
