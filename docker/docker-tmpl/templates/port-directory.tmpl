@@ -15,7 +15,7 @@
 {%- endfor -%}
 <html>
 <head>
-<title>Docker containers on {{hostname}}</title>
+<title>Docker containers on {{hostname_full}}</title>
 <style>
 table {
   width: 75%;
@@ -28,7 +28,7 @@ table, th, td {
 </head>
 <body>
 
-<h1>Docker containers under {{domain}}</h1>
+<h1>Docker containers on {{hostname_full}}</h1>
 <table>
 <tr>
   <th>Name</th>
@@ -37,8 +37,10 @@ table, th, td {
 </tr>
 {% for c in containers %}
 <tr>
-  {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
-    <td><a href="https://{{ c.name }}.{{ domain }}">{{ c.name }}</a></td>
+  {%- if http_port_by_id[c.id] %}
+    <td><a href="http://{{ hostname_full }}:{{ http_port_by_id[c.id] }}">{{ c.name }}</a></td>
+  {%- elif tls_port_by_id[c.id] %}
+    <td><a href="https://{{ hostname_full }}:{{ tls_port_by_id[c.id] }}">{{ c.name }}</a></td>
   {%- else %}
     <td>{{ c.name }}</td>
   {%- endif %}

@@ -38,26 +38,26 @@ frontend http-in
 
 {% for c in containers -%}
     {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
-    acl is_{{loop.index}}_{{c.name}} hdr_end(host) -i {{c.name}}.{{domain}}
+    acl is_be{{loop.index}} hdr_end(host) -i {{c.name}}.{{domain}}
     {%- endif %}
 {%- endfor -%}
 {%- for c in containers -%}
     {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
-    use_backend be{{loop.index}}_{{c.name}} if is_{{loop.index}}_{{c.name}}
+    use_backend be{{loop.index}} if is_be{{loop.index}}
     {%- endif %}
 {%- endfor %}
 
 {% for c in containers %}
     {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
-backend be{{ loop.index }}_{{ c.name }}
+backend be{{ loop.index }}
 	balance roundrobin
 	option httpclose
 	option forwardfor
         {%- if http_port_by_id[c.id] %}
-	server 1 {{backend_host}}:{{ http_port_by_id[c.id] }} check maxconn 32
+	server 1 {{hostname_full}}:{{ http_port_by_id[c.id] }} check maxconn 32
         {%- endif %}
         {%- if tls_port_by_id[c.id] %}
-	server 1 {{backend_host}}:{{ tls_port_by_id[c.id] }} check ssl verify none maxconn 32
+	server 1 {{hostname_full}}:{{ tls_port_by_id[c.id] }} check ssl verify none maxconn 32
         {%- endif %}
     {%- endif %}
 {% endfor %}
