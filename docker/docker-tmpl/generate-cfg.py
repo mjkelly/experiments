@@ -12,35 +12,43 @@ from absl import logging
 FLAGS = flags.FLAGS
 
 flags.DEFINE_string('template', None, 'Jinja2 template to use as input.')
-flags.DEFINE_multi_string('var', [], 'Extra template variables to pass to Jinja2.')
+flags.DEFINE_multi_string('var', [],
+                          'Extra template variables to pass to Jinja2.')
 flags.mark_flag_as_required('template')
 
+
 def main(argv):
-	del argv  # Unused.
-	hostname_full = socket.gethostname()
-	hostname = hostname_full.split('.')[0]
-	domain = '.'.join(hostname_full.split('.')[1:])
-	logging.info('Loading template %s', FLAGS.template)
+    del argv  # Unused.
+    hostname_full = socket.gethostname()
+    hostname = hostname_full.split('.')[0]
+    domain = '.'.join(hostname_full.split('.')[1:])
+    logging.info('Loading template %s', FLAGS.template)
 
-	d = docker.from_env()
-	containers = d.containers.list()
+    d = docker.from_env()
+    containers = d.containers.list()
 
-	vars = {'hostname': hostname, 'hostname_full': hostname_full, 'domain': domain, 'now': datetime.datetime.now(), 'containers': containers}
+    vars = {
+        'hostname': hostname,
+        'hostname_full': hostname_full,
+        'domain': domain,
+        'now': datetime.datetime.now(),
+        'containers': containers
+    }
 
-	extra_vars = {}
-	for v in FLAGS.var:
-		key, value = v.split("=", 1)
-		extra_vars[key] = value
+    extra_vars = {}
+    for v in FLAGS.var:
+        key, value = v.split("=", 1)
+        extra_vars[key] = value
 
-	logging.debug(f"Internal vars: {vars}")
-	logging.debug(f"Extra vars (from command-line): {extra_vars}")
+    logging.debug(f"Internal vars: {vars}")
+    logging.debug(f"Extra vars (from command-line): {extra_vars}")
 
-	vars.update(extra_vars)
+    vars.update(extra_vars)
 
-	with open(FLAGS.template, 'r') as fh:
-		template = jinja2.Template(fh.read())
-	print(template.render(**vars))
+    with open(FLAGS.template, 'r') as fh:
+        template = jinja2.Template(fh.read())
+    print(template.render(**vars))
 
 
 if __name__ == '__main__':
-  app.run(main)
+    app.run(main)

@@ -57,3 +57,6 @@ generate a directory by hostname:
 ```
 There is an idempotent script that starts/updates a container like this in
 `scripts/haproxy-directory.sh`.
+
+If you're trying to debug why a template isn't working, pass `-v=1` to
+`generate-cfg.py` and it'll output more verbose debug information.
