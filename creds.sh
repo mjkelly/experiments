@@ -27,14 +27,15 @@
 ## When you run creds.sh push <filename>, you write to the S3 "folder" specified
 ## by .credpath.
 
+set -e
+
 PATH_FILE=.credpath
 GLOBAL_CONFIG=$HOME/.credconfig
 
-set -e
 op=$1
 
 function get_path() {
-  echo "${CREDS_S3_BUCKET}/$(cat $PATH_FILE)" 2>/dev/null
+  echo "${CREDS_S3_BUCKET}/$(cat $PATH_FILE 2>/dev/null)"
 }
 
 function show_help() {
@@ -62,21 +63,18 @@ function check_configs() {
   fi
 }
 
-
+path=$(get_path)
 if [[ $op == "push" ]]; then
   check_configs
-  path=$(get_path)
   shift
   for f in "$@"; do
     aws --profile=$PROFILE s3 cp $f ${path}/$f
   done
 elif [[ $op == "pull" ]]; then
   check_configs
-  path=$(get_path)
   aws --profile=$PROFILE s3 sync ${path}/$f .
 elif [[ $op == "ls" ]]; then
   check_configs
-  path=$(get_path)
   aws --profile=$PROFILE s3 ls ${path}/$f
 elif [[ $op == "help" ]]; then
   show_help
