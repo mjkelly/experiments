@@ -39,7 +39,7 @@ function get_path() {
 }
 
 function show_help() {
-  awk '/^##/{ print; }' < $0
+  perl -ne '/^## ?(.*)/ && print "$1\n";' < $0
 }
 
 function check_configs() {
