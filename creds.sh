@@ -63,18 +63,20 @@ function check_configs() {
   fi
 }
 
-path=$(get_path)
 if [[ $op == "push" ]]; then
   check_configs
+  path=$(get_path)
   shift
   for f in "$@"; do
-    aws --profile=$PROFILE s3 cp $f ${path}/$f
+    echo aws --profile=$PROFILE s3 cp $f ${path}/$f
   done
 elif [[ $op == "pull" ]]; then
   check_configs
+  path=$(get_path)
   aws --profile=$PROFILE s3 sync ${path}/$f .
 elif [[ $op == "ls" ]]; then
   check_configs
+  path=$(get_path)
   aws --profile=$PROFILE s3 ls ${path}/$f
 elif [[ $op == "help" ]]; then
   show_help
