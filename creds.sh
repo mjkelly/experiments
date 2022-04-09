@@ -68,7 +68,7 @@ if [[ $op == "push" ]]; then
   path=$(get_path)
   shift
   for f in "$@"; do
-    echo aws --profile=$PROFILE s3 cp $f ${path}/$f
+    aws --profile=$PROFILE s3 cp $f ${path}/$f
   done
 elif [[ $op == "pull" ]]; then
   check_configs
