@@ -1,0 +1,13 @@
+#cloud-config
+preserve_hostname: false
+users:
+- lock_passwd: false
+  name: packer
+  # this is just 'cloud123' :)
+  passwd: '$1$snvJPnrQ$xbYN/UpQdqYhmv4KkNPjc/'
+  shell: /bin/bash
+  ssh_authorized_keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQChaHVvSKHf0sxn1S8p1PttCJoCZ8u7LOOqNOli5s0WVJPWzcoD860++9EttW9NuSlrmojydFPxou+iGvPXAKI0+YHCEcbDW+XsS20DaOgoecIJPU6EPr8pTf3Uh6b7mitaKvFLM0Pk7QvMhfliIuRqz9R4yNJNNWaX2rg0mcsfeI5RgPX/Qnbmym0EQCJJyzC5xUDwkcKunVwJbT771OT8jCayrDnbI3ka2JUZOtVv5632GCFLG9CMtSiEwm1ahgV9Io67EVoAfWz04lIXnrkxPMTRGtxnhsrjFM1YpKf/l5VIs4bwPRKHawKWYYhXxnxmD6FZR0CTGpqzrPpviqSt4ClayRjZ8kJhpHoJscYIl7TuQkRRIUsWd3H6916H68wQ451V7nqXIHhX2ETpp+jtpA1FZ2Qk7d+CG4qUMhM/zpNxLSo99m+mMDBs4/t1gOrXase/dM67gThLHMpulGfExiub4D8ZtPIBEUi7KtDDfd46gZXtnJXIS73ng1bEx2s= sshkey@changeme
+  sudo:
+  - ALL=(ALL) NOPASSWD:ALL
+

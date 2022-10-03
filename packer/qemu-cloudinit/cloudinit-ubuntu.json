@@ -1,0 +1,37 @@
+{
+    "builders": [
+        {
+            "type": "qemu",
+            "iso_url": "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img",
+            "iso_checksum": "file:https://cloud-images.ubuntu.com/jammy/current/SHA256SUMS",
+            "output_directory": "packer-out",
+            "shutdown_command": "sudo shutdown --poweroff now",
+            "disk_image": true,
+            "disk_size": "5000M",
+            "format": "qcow2",
+            "accelerator": "kvm",
+            "ssh_username": "packer",
+            "ssh_private_key_file": "~/.ssh/packer",
+            "ssh_timeout": "5m",
+            "vm_name": "cloudinit1",
+            "net_device": "virtio-net",
+            "disk_interface": "virtio",
+            "boot_wait": "10s",
+            "qemuargs": [
+                [
+                    "-cdrom",
+                    "cidata.img"
+                ]
+            ]
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+                "echo Configured by Packer | sudo tee /etc/packer",
+                "date | sudo tee -a /etc/packer"
+            ]
+        }
+    ]
+}
