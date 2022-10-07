@@ -2,7 +2,7 @@
 preserve_hostname: false
 users:
 - lock_passwd: false
-  name: packer
+  name: mkelly
   # this is just 'cloud123' :)
   passwd: '$1$snvJPnrQ$xbYN/UpQdqYhmv4KkNPjc/'
   shell: /bin/bash

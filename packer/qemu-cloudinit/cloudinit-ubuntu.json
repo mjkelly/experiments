@@ -10,7 +10,7 @@
             "disk_size": "5000M",
             "format": "qcow2",
             "accelerator": "kvm",
-            "ssh_username": "packer",
+            "ssh_username": "mkelly",
             "ssh_private_key_file": "~/.ssh/packer",
             "ssh_timeout": "5m",
             "vm_name": "cloudinit1",
@@ -29,6 +29,21 @@
         {
             "type": "shell",
             "inline": [
+                "mkdir /tmp/packer"
+            ]
+        },
+        {
+            "type": "file",
+            "source": "netplan.yaml",
+            "destination": "/tmp/packer/01-instance.yaml"
+        },
+        {
+            "type": "shell",
+            "inline": [
+                "echo 'network: {config: disabled}' | sudo tee /etc/cloud/cloud.cfg.d/99-disable-network-config.cfg",
+                "sudo mv /etc/netplan/50-cloud-init.yaml /etc/netplan-disabled.yaml",
+                "sudo mv /tmp/packer/01-instance.yaml /etc/netplan/",
+                "sudo netplan generate",
                 "echo Configured by Packer | sudo tee /etc/packer",
                 "date | sudo tee -a /etc/packer"
             ]
