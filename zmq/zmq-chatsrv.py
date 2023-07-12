@@ -3,10 +3,6 @@
 # zmqchat.py -- $desc$
 # Copyright 2010 Michael Kelly (michael@michaelkelly.org)
 #
-# This program is released under the terms of the GNU General Public
-# License as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
 # Fri Feb 10 22:28:09 EST 2012
 # -----------------------------------------------------------------
 

@@ -4,10 +4,6 @@
 #
 # Copyright 2010 Michael Kelly (michael@michaelkelly.org)
 #
-# This program is released under the terms of the GNU General Public
-# License as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
 # Sat Jan 29 18:50:58 EST 2011
 # -----------------------------------------------------------------
 

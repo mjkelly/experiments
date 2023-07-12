@@ -3,10 +3,6 @@
 # mved.py -- Renames files in the current directory through a text editor.
 # Copyright 2007 Michael Kelly (michael@michaelkelly.org)
 #
-# This program is released under the terms of the GNU General Public
-# License as published by the Free Software Foundation; either version 2
-# of the License, or (at your option) any later version.
-#
 # Sun Feb  7 13:38:06 EST 2010
 # Updated Sat Nov  2 22:00:17 EDT 2019
 # -----------------------------------------------------------------
