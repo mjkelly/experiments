@@ -2,7 +2,7 @@ image: alpine/edge
 secrets:
   - 09def2be-6540-44f4-9b5d-419d83564d93
 environment:
-  REPO: michaelkelly.org
+  REPO: experiments
   GH_USER: mjkelly
 tasks:
   - write-ssh-config: |
