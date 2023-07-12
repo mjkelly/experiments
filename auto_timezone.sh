@@ -10,10 +10,9 @@ set -u
 # IP_LOCATION_API_KEY=<API KEY>
 . ~/.ipgeolocation.io
 
-ip=$(curl --silent http://ipv4.icanhazip.com)
 # We use the timezone API as documented here:
 # https://ipgeolocation.io/documentation/timezone-api.html
-timezone=$(curl --silent "https://api.ipgeolocation.io/timezone?apiKey=${IP_LOCATION_API_KEY}&ip=${ip}" | jq -r .timezone)
+timezone=$(curl --silent "https://api.ipgeolocation.io/timezone?apiKey=${IP_LOCATION_API_KEY}" | jq -r .timezone)
 
 echo -n "Set timezone to ${timezone}? [y/N] "
 read answer
