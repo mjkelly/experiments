@@ -1,0 +1,21 @@
+image: alpine/edge
+secrets:
+  - 09def2be-6540-44f4-9b5d-419d83564d93
+environment:
+  REPO: michaelkelly.org
+  GH_USER: mjkelly
+tasks:
+  - write-ssh-config: |
+      cat <<_FILE_ >> ~/.ssh/config
+      Host github.com
+        IdentityFile ~/.ssh/id_rsa
+        IdentitiesOnly yes
+        BatchMode yes
+        StrictHostKeyChecking no
+      _FILE_
+  - push-to-github: |
+      cd ~/"${REPO}"
+      # remove remotes/origin/HEAD so we don't push it
+      git remote set-head origin -d
+      git remote add github "git@github.com:${GH_USER}/${REPO}.git"
+      git push --prune github '+refs/remotes/origin/*:refs/heads/*' '+refs/tags/*:refs/tags/*'
