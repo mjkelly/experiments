@@ -11,6 +11,3 @@ export BORG_PASSPHRASE='foo bar baz qux'
 
 # Remote borg path. On rsync.net, this should be "borg1".
 export BORG_REMOTE_PATH=borg1
-
-# Set any extra options needed by borg here.
-export EXTRA_BORG_ARGS=
