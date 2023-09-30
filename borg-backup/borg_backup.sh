@@ -7,11 +7,11 @@
 # This won't initialize a repository that doesn't exist, so to do that, run
 # something like this:
 #    . $HOME/borg_backup_vars
-#    borg init $EXTRA_BORG_ARGS
+#    borg init
 
-# We use this to set EXTRA_BORG_ARGS, BORG_REPO and BORG_PASSPHRASE or
-# BORG_PASSCOMMAND.
-. $HOME/borg_backup_vars
+# We use this to set BORG_REPO and BORG_PASSPHRASE or BORG_PASSCOMMAND. And any
+# other env vars you need, like BORG_REMOTE_PATH.
+. /root/borg_backup_vars
 
 # some helpers and error handling:
 info() { printf "\n%s %s\n\n" "$( date )" "$*" >&2; }
@@ -23,7 +23,6 @@ info "Starting backup"
 # the machine this script is currently running on:
 
 borg create                         \
-    $EXTRA_BORG_ARGS                \
     --verbose                       \
     --filter AME                    \
     --list                          \
@@ -37,31 +36,28 @@ borg create                         \
     --exclude '/var/tmp/*'          \
     '::{hostname}-{now}'            \
     /etc                            \
+    /lib/systemd                    \
     /home                           \
 
 # The original version of this script also saves:
 #    /root
 #    /var
 
-exit 10
-
 backup_exit=$?
 
 info "Pruning repository"
 
-# Use the `prune` subcommand to maintain 7 daily, 4 weekly and 6 monthly
-# archives of THIS machine. The '{hostname}-' prefix is very important to
-# limit prune's operation to this machine's archives and not apply to
-# other machines' archives also:
+# Use the `prune` subcommand to a certain number of backups of THIS machine.
+# The '{hostname}-*' glob is very important to limit prune's operation to this
+# machine's archives and not apply to other machines' archives also:
 
 borg prune                          \
-    $EXTRA_BORG_ARGS                \
     --list                          \
-    --prefix '{hostname}-'          \
+    --glob-archives '{hostname}-*'  \
     --show-rc                       \
     --keep-within   1d              \
-    --keep-daily    7               \
-    --keep-weekly   4               \
+    --keep-daily    14              \
+    --keep-weekly   8               \
     --keep-monthly  6               \
 
 prune_exit=$?
