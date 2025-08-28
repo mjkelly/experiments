@@ -60,10 +60,13 @@ flags.DEFINE_string(
     '$6$saltsalt$wVzOxp139jXJm2bHzpMAu/52NJLuaPceqzdvGa./Pxu5.amCga/iJsPLejmOHcd6/EAsslzKy79a49nP85FMR0',
     'Hash of password for user; ONLY USED IF YOU ALSO PASS --password. Default is the hash of "cloud123"'
 )
-flags.DEFINE_boolean('dhcp', True,
-                    'If true, use DHCP. Otherwise, use the other --net-* options.')
-flags.DEFINE_string('net_device', None,
-                    'Device name to apply network settings to. This must match one of the devices that already exists on the device. (This does not create a new device.)')
+flags.DEFINE_boolean(
+    'dhcp', True,
+    'If true, use DHCP. Otherwise, use the other --net-* options.')
+flags.DEFINE_string(
+    'net_device', None,
+    'Device name to apply network settings to. This must match one of the devices that already exists on the device. (This does not create a new device.)'
+)
 flags.DEFINE_string('net_address', None,
                     'If set, IP of VM. Used if --dhcp=false.')
 flags.DEFINE_string('net_nameservers', None,
@@ -114,8 +117,7 @@ class Config(typing.NamedTuple):
     def apply_defaults(self, global_flags):
         # To apply defaults, we re-parse argv with defaults from the config first.
         cmdline_with_defaults = (
-            [sys.argv[0]]  +
-            list(flags.flag_dict_to_args(CONFIG.defaults)) +
+            [sys.argv[0]] + list(flags.flag_dict_to_args(CONFIG.defaults)) +
             sys.argv[1:])
         logging.debug(f"Commandline with defaults: {cmdline_with_defaults}")
         return global_flags(cmdline_with_defaults)
@@ -288,10 +290,7 @@ def do_create():
             },
         ]
 
-    metadata_dict = {
-        "instance-id": prefix + name,
-        "local-hostname": name
-    }
+    metadata_dict = {"instance-id": prefix + name, "local-hostname": name}
     if not FLAGS.dhcp:
         metadata_dict["network-interfaces"] = "\n".join([
             f"auto lo",
@@ -380,9 +379,9 @@ def do_create():
     run([
         "qemu-img",
         "convert",
-        "-n", # do not resize the image (relevant if output is a file)
-        "-p", # show progress
-        "-O", # convert to a raw disk image, not a sparse format
+        "-n",  # do not resize the image (relevant if output is a file)
+        "-p",  # show progress
+        "-O",  # convert to a raw disk image, not a sparse format
         "raw",
         disk_base,
         disk_dev,
@@ -454,17 +453,21 @@ def do_delete():
     logging.info(f"VM {dom} was removed.")
     run(["sh", "-c", post_delete_cmd])
 
+
 def _detach_disk(dom, dev):
     run([
         "virsh", "detach-disk", "--config", "--persistent", FLAGS.prefix + dom,
         dev
     ])
 
+
 def _wipe_dev(dev):
     run(["wipefs", "--all", dev])
 
+
 def _start_dom(dom):
     run(["virsh", "start", FLAGS.prefix + dom])
+
 
 def _list_devices(dom):
     lines = out(["virsh", "domblklist", dom], run_even_if_dry_run=True)
@@ -475,11 +478,13 @@ def _list_devices(dom):
             devs.append(parts[1])
     return devs
 
+
 def _list_vms(list_all):
     maybe_all = ["--all"] if list_all else []
     names = out(["virsh", "list", "--name"] + maybe_all,
                 run_even_if_dry_run=True)
     return [n for n in names.split('\n') if n.startswith(FLAGS.prefix)]
+
 
 def _make_post_create_cmd(args):
     logging.debug(f"Post create actions: {FLAGS.post_create}")
@@ -487,11 +492,13 @@ def _make_post_create_cmd(args):
     logging.debug(f"Post create command: {cmd}")
     return cmd
 
+
 def _make_post_delete_cmd(args):
     logging.debug(f"Post delete actions: {FLAGS.post_delete}")
     cmd = FLAGS.post_delete.format(**args)
     logging.debug(f"Post delete command: {cmd}")
     return cmd
+
 
 def do_list():
     for vm in _list_vms(False):
@@ -506,7 +513,7 @@ def main(argv):
         err_quit(f"Exactly one operation is required: {known_ops}")
     op = argv[1]
     if op not in {"create", "delete", "list"}:
-            err_quit(f"Unknown operation {op} -- expecting one of: {known_ops}")
+        err_quit(f"Unknown operation {op} -- expecting one of: {known_ops}")
 
     logging.info(FLAGS["name"].value)
     CONFIG = Config.load(FLAGS.config)
