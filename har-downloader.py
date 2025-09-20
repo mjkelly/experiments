@@ -22,14 +22,11 @@ import random
 import shlex
 import sys
 import time
-
-# This is the minimum amount of time to wait between downloads.
-# We add up to 50% of jitter to this.
-COOLDOWN_SECONDS = 2
+import argparse
 
 
-def read_har(har_file):
-    with open(har_file, 'r') as fh:
+def read_har(args):
+    with open(args.har_file, 'r') as fh:
         data = json.load(fh)
 
     urls = []
@@ -43,18 +40,25 @@ def read_har(har_file):
         elif url.endswith('/'):
             print(f'Skipping directory {url}')
             skipped += 1
-        else:
+        if args.url_pattern is None or args.url_pattern in url:
             urls.append(url)
-    print(f'Found {len(urls)} viable URLs in {har_file}, skipped {skipped}')
+        else:
+            print(f'Skipping non-matcihng URL: {url}')
+            skipped += 1
+    print(
+        f'Found {len(urls)} URLs to download from {args.har_file}. Skipped {skipped}.'
+    )
     return urls
 
 
-def download(url, destination):
+def download(url, destination, args):
     parsed = urlparse(url)
     dest_file = os.path.join(destination, parsed.netloc, parsed.path[1:])
-    if parsed.query:
+    if args.save_query_string and parsed.query:
         dest_file = dest_file + '?' + parsed.query
     print(f"{url} -> {dest_file}")
+    if args.dry_run:
+        return False
 
     shlex.os.makedirs(os.path.dirname(dest_file), exist_ok=True)
     exists = False
@@ -72,27 +76,51 @@ def download(url, destination):
 
 
 def main():
-    if len(sys.argv) < 3:
-        print(f"Usage: {sys.argv[0]} HAR_FILE DESTINATION_DIR")
-        exit(2)
-    print("===== READING HAR FILE =====")
-    har_file, destination = sys.argv[1], sys.argv[2]
-    urls = read_har(har_file)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("har_file")
+    parser.add_argument("destination_dir")
+    parser.add_argument(
+        "--dry-run",
+        help="Show what we would download and where it would go",
+        action='store_true')
+    parser.add_argument(
+        "--save-query-string",
+        help="If specified, save the full query string in the local filename. "
+        "This can be useful if you have requests that differ only by query "
+        "string - but it means you must find a way to serve these files "
+        "separately on your own. (A static webserver won't do it.)",
+        action='store_true')
+    parser.add_argument(
+        "--cooldown-seconds",
+        help="This is the minimum amount of time to wait between downloads. "
+        "We add up to 50%% of jitter to this.",
+        type=int,
+        default=2)
+    parser.add_argument("--url-pattern",
+                        help="Only download URLs containing this substring.")
+    args = parser.parse_args()
 
-    print("\n===== DOWNLOADING FILES =====")
+    dry_run_str = "[DRY RUN] " if args.dry_run else ""
+    print(f"===== {dry_run_str}READING HAR FILE =====")
+    urls = read_har(args)
+
+    print(f"\n===== {dry_run_str}DOWNLOADING FILES =====")
     downloaded, existing = 0, 0
     try:
         for url in urls[5:]:
-            if download(url, destination) and COOLDOWN_SECONDS != 0:
+            if download(url, args.destination_dir,
+                        args) and args.cooldown_seconds != 0:
                 downloaded += 1
-                time.sleep(COOLDOWN_SECONDS +
-                           (0.5 * COOLDOWN_SECONDS * random.random()))
+                time.sleep(args.cooldown_seconds +
+                           (0.5 * args.cooldown_seconds * random.random()))
             else:
                 existing += 1
     except Exception as e:
         raise
     finally:
-        print(f"Downloaded {downloaded}, {existing} files already existed.")
+        print(
+            f"{dry_run_str}Downloaded {downloaded}, {existing} files already existed."
+        )
 
 
 if __name__ == '__main__':
