@@ -65,7 +65,7 @@ ext_display=$(echo "${outputs_json}" |
 
 # Orient the displays
 if [[ $pos == left ]]; then
-  swaymsg "output ${MAIN_DISPLAY} position \"${ext_width},0\",output DP-1 position \"0,0\""
+  swaymsg "output ${MAIN_DISPLAY} position \"${ext_width},0\",output ${ext_display} position \"0,0\""
 elif [[ $pos == right ]]; then
   swaymsg "output ${MAIN_DISPLAY} position \"0,0\",output ${ext_display} position \"${main_width},0\""
 fi
