@@ -15,8 +15,10 @@
 ## - Set up the `aws` CLI. We use `aws s3` subcommands.
 ## - Write a file in ~/.credconfig that looks like this:
 ##     export CREDS_S3_BUCKET=<your s3 bucket>
-##   You can optionally add another line:
 ##     export AWS_PROFILE=<name of aws profile to use>
+##
+## (If you're not sure which profiles are configured, you
+## can run: aws configure list-profiles)
 ##
 ## Per-project setup:
 ## When you create a new project (for instance, a git repo).
@@ -71,9 +73,13 @@ if [[ $op == "push" ]]; then
     aws --profile=$PROFILE s3 cp $f ${path}/$f
   done
 elif [[ $op == "pull" ]]; then
+  if [[ $# -gt 1 ]]; then
+    echo "usage: $0 pull" >&2
+    exit 2
+  fi
   check_configs
   path=$(get_path)
-  aws --profile=$PROFILE s3 sync ${path}/$f .
+  aws --profile=$PROFILE s3 sync ${path} .
 elif [[ $op == "ls" ]]; then
   check_configs
   path=$(get_path)
