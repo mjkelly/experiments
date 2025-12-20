@@ -3,9 +3,7 @@
 # route53-update2.py -- Updates a DNS record in Amazon's Route 53. This is the
 # python3, boto version.
 #
-# Copyright 2020 Michael Kelly (michael@michaelkelly.org)
-#
-# Sat Apr 18 02:23:22 EDT 2020
+# Copyright 2025 Michael Kelly (m@michaelkelly.org)
 # -----------------------------------------------------------------
 
 from urllib import request
@@ -50,15 +48,31 @@ def make_resource_record_set(domain, ttl, ip):
 
 
 def update_dns(client, zone_id, rrs):
-    hostname = socket.gethostname()
+    hostname = socket.getfqdn()
     exe = sys.argv[0]
-    comment = f'Automatic update by {exe} on {hostname}'
+    comment = f'Updated by {exe} on {hostname}'
     response = client.change_resource_record_sets(
         HostedZoneId=zone_id,
         ChangeBatch={
             'Comment': comment,
             'Changes': [{
                 'Action': 'UPSERT',
+                'ResourceRecordSet': rrs,
+            }]
+        })
+    logger.debug(f"change_resource_record_sets({zone_id}) => {response}")
+
+
+def delete_dns(client, zone_id, rrs):
+    hostname = socket.getfqdn()
+    exe = sys.argv[0]
+    comment = f'Deleted by {exe} on {hostname}'
+    response = client.change_resource_record_sets(
+        HostedZoneId=zone_id,
+        ChangeBatch={
+            'Comment': comment,
+            'Changes': [{
+                'Action': 'DELETE',
                 'ResourceRecordSet': rrs,
             }]
         })
@@ -87,12 +101,23 @@ def update_dns(client, zone_id, rrs):
     show_default=True,
     help="TTL to set on the A record")
 @click.option(
+    "--ip",
+    type=str,
+    default=None,
+    help="Set DNS record to provided IP. Do not auto-detect.")
+@click.option(
+    "--delete",
+    type=bool,
+    is_flag=True,
+    default=False,
+    help="Delete the DNS record instead of updating it.")
+@click.option(
     "--dry-run",
     type=bool,
     is_flag=True,
     default=False,
     help="Don't actually do the thing. Usually useful with --log-level INFO")
-def main(zone_id, domain, ttl, dry_run):
+def main(zone_id, domain, ttl, ip, dry_run, delete):
     """Updates an AWS Route53 DNS name with this host's current IP.
 
     We use an external service to get the current IP, and update the IP in
@@ -121,6 +146,11 @@ def main(zone_id, domain, ttl, dry_run):
     \b
     Here's an example: Use the "dns" profile:
         AWS_PROFILE=dns ./route53-update2.py [flags]
+    
+    \b
+    We can also clean up after ourselves and delete a record:
+        ./route53-update2.py --zone-id Z0000000000000 \\
+                --domain test.example.com. --delete
     """
     if not domain.endswith('.'):
         raise click.UsageError(
@@ -128,7 +158,23 @@ def main(zone_id, domain, ttl, dry_run):
     if dry_run:
         logger.info(f"Dry run mode. Will not make changes.")
     client = boto3.client('route53')
-    ip = get_ip()
+
+    if delete:
+        logger.info("Delete mode selected.")
+        cur_rrs = get_rr_from_dns(client, zone_id, domain)
+        logger.info(f"current rr = {cur_rrs}")
+        if cur_rrs is None:
+            logger.info("No matching record found to delete. Quitting.")
+            sys.exit(1)
+        if dry_run:
+            logger.info("Would delete DNS record.")
+        else:
+            delete_dns(client, zone_id, cur_rrs)
+            logger.info("Record deleted")
+        return
+
+    if ip is None:
+        ip = get_ip()
     logger.info(f"My IP is: {ip}")
 
     cur_rrs = get_rr_from_dns(client, zone_id, domain)
