@@ -19,7 +19,7 @@ flags.mark_flag_as_required('template')
 
 def main(argv):
     del argv  # Unused.
-    hostname_full = socket.gethostname()
+    hostname_full = socket.getfqdn()
     hostname = hostname_full.split('.')[0]
     domain = '.'.join(hostname_full.split('.')[1:])
     logging.info('Loading template %s', FLAGS.template)

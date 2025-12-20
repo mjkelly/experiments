@@ -37,10 +37,15 @@ table, th, td {
 </tr>
 {% for c in containers %}
 <tr>
+  {%- set link_container_name = c.labels.get('link-container-name', '').strip() -%}
+  {%- set href = hostname_full %}
+  {%- if link_container_name %}
+    {%- set href = c.name + "." + domain %}
+  {%- endif %}
   {%- if http_port_by_id[c.id] %}
-    <td><a href="http://{{ hostname_full }}:{{ http_port_by_id[c.id] }}">{{ c.name }}</a></td>
+    <td><a href="http://{{ href }}:{{ http_port_by_id[c.id] }}">{{ c.name }}</a></td>
   {%- elif tls_port_by_id[c.id] %}
-    <td><a href="https://{{ hostname_full }}:{{ tls_port_by_id[c.id] }}">{{ c.name }}</a></td>
+    <td><a href="https://{{ href }}:{{ tls_port_by_id[c.id] }}">{{ c.name }}</a></td>
   {%- else %}
     <td>{{ c.name }}</td>
   {%- endif %}
