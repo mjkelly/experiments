@@ -7,11 +7,12 @@
 # -----------------------------------------------------------------
 
 from urllib import request
-import boto3
+import boto3 # type: ignore[import-untyped]
 import click
 import logging
 import socket
 import sys
+from typing import Optional, Dict, Any
 
 # https://www.rdegges.com/2018/to-30-billion-and-beyond/
 IP_SERVICE_URL = "https://api.ipify.org"
@@ -22,21 +23,22 @@ logging.basicConfig(
 logger = logging.getLogger()
 
 
-def get_ip():
+def get_ip() -> str:
     logger.info(f"Using {IP_SERVICE_URL} to determine my IP")
     with request.urlopen(IP_SERVICE_URL, data=None, timeout=5.0) as url:
         return url.read().decode("utf-8").strip()
 
 
-def get_rr_from_dns(client, zone_id, domain):
-    response = client.list_resource_record_sets(HostedZoneId=zone_id)
+def get_rr_from_dns(client: Any, zone_id: str, domain: str) -> Optional[Dict[str, Any]]:
+    response: Dict[str, Any] = client.list_resource_record_sets(HostedZoneId=zone_id)
     logger.debug(f"list_resource_record_sets({zone_id}) => {response}")
     for rr in response['ResourceRecordSets']:
         if rr['Name'] == domain and rr['Type'] == 'A':
             return rr
+    return None
 
 
-def make_resource_record_set(domain, ttl, ip):
+def make_resource_record_set(domain: str, ttl: int, ip: str) -> Dict[str, Any]:
     return {
         'Name': domain,
         'Type': 'A',
@@ -47,7 +49,7 @@ def make_resource_record_set(domain, ttl, ip):
     }
 
 
-def update_dns(client, zone_id, rrs):
+def update_dns(client: Any, zone_id: str, rrs: Dict[str, Any]) -> None:
     hostname = socket.getfqdn()
     exe = sys.argv[0]
     comment = f'Updated by {exe} on {hostname}'
@@ -63,7 +65,7 @@ def update_dns(client, zone_id, rrs):
     logger.debug(f"change_resource_record_sets({zone_id}) => {response}")
 
 
-def delete_dns(client, zone_id, rrs):
+def delete_dns(client: Any, zone_id: str, rrs: Dict[str, Any]) -> None:
     hostname = socket.getfqdn()
     exe = sys.argv[0]
     comment = f'Deleted by {exe} on {hostname}'
@@ -117,7 +119,7 @@ def delete_dns(client, zone_id, rrs):
     is_flag=True,
     default=False,
     help="Don't actually do the thing. Usually useful with --log-level INFO")
-def main(zone_id, domain, ttl, ip, dry_run, delete):
+def main(zone_id: str, domain: str, ttl: int, ip: Optional[str], delete: bool, dry_run: bool) -> None:
     """Updates an AWS Route53 DNS name with this host's current IP.
 
     We use an external service to get the current IP, and update the IP in

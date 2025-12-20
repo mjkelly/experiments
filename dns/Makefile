@@ -9,3 +9,12 @@ venv/install: venv requirements.txt ## Install packages in venv
 
 clean:
 	rm -rf venv
+
+typecheck: venv/typecheck ## Run type checks
+	./venv/bin/mypy route53-update2.py
+
+venv/typecheck: venv/install ## Prepare for type checking
+	./venv/bin/pip3 install mypy
+	touch venv/typecheck
+	
+.PHONY: all clean typecheck
