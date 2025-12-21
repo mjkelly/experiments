@@ -55,7 +55,9 @@ a, a:hover, a:visited, a:active {
 {% endfor %}
 </table>
 
-<small>As of {{now}}</small>
+<p>
+  <small>As of {{now.astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")}}</small>
+</p>
 
 </body>
 </html>
