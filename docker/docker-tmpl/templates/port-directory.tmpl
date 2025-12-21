@@ -16,14 +16,23 @@
 <html>
 <head>
 <title>Docker containers on {{hostname_full}}</title>
+<meta name=viewport content="width=device-width,initial-scale=1">
 <style>
+body {
+  background: #232323;
+  color: white;
+}
+th, td {
+  text-align: left;
+  border: none;
+  padding: 5px;
+} 
 table {
-  width: 75%;
-} 
-table, th, td {
-  border: 1px solid black;
-  
-} 
+  border-collapse: collapse;
+}
+a, a:hover, a:visited, a:active {
+  color: #4c66d0
+}
 </style>
 </head>
 <body>
@@ -32,7 +41,6 @@ table, th, td {
 <table>
 <tr>
   <th>Name</th>
-  <th>Created</th>
   <th>Image</th>
 </tr>
 {% for c in containers %}
@@ -49,13 +57,14 @@ table, th, td {
   {%- else %}
     <td>{{ c.name }}</td>
   {%- endif %}
-  <td>{{ c.attrs['Created'] }}</td>
   <td>{{ c.attrs['Config']['Image'] }}</td>
 </tr>
 {% endfor %}
 </table>
 
-<small>As of {{now}}</small>
+<p>
+  <small>As of {{now}}</small>
+</p>
 
 </body>
 </html>
