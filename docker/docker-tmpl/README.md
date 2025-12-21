@@ -64,8 +64,13 @@ There is an idempotent script that starts/updates a container like this in
 If you're trying to debug why a template isn't working, pass `-v=1` to
 `generate-cfg.py` and it'll output more verbose debug information.
 
-### Useful tags for containers when using `port-directory.tmpl`
+## Using `port-directory.tmpl`
 
+This template directs to hostports on a docker host. This is the simplest to
+use. It just requires that you have your docker services exposed to your local
+network.
+
+### Docker Tags
 You can configure the output of the port-directory script with the following
 tags:
 * `http-port`: The HTTP port exposed by container. We generate an `http://`
@@ -80,3 +85,51 @@ tags:
 
 This template does not generate a link to a container one of `http-port` or
 `tls-port` is not present. (We don't know if exposed ports are http/https UIs.)
+
+## Using `haproxy-directory.tmpl`
+
+This template directs to hostnames. This has more requirements:
+* You must have a load balancer (such as the one from `haproxy.tmpl`) that will
+  redirect requests to each host to its appropriate container. We don't rely on
+  nonstandard port numbers anymore.
+* You must have a DNS setup that will send traffic from different hostnames to
+  your load balancer. The easiest way to do this is to use a wildcard, so
+  `*.example.com` all goes to your load balancer.
+
+### Docker tags
+We will list any container that has either `http-port` or `tls-port`. We don't
+actually use the value of the port here, because we assume directing to the
+hostname is enough. (If it isn't, use `port-directory.tmpl`).
+
+### Vars
+You can pass `--var extra_links` to add more links here. This is a
+comma-separated list of key=value pairs. The key is the name, the value is the
+full link (including http/https scheme).
+
+Example: `--var extra_links=Example=http://example.com`
+
+## Using `haproxy.tmpl`
+
+This generates a haproxy config for a load balancer that can be used to serve
+requests from `haproxy-directory.tmpl`. This server should listen on ports 80
+and 443 and DNS should point all container hostnames to it (for example via a
+wildcard).
+
+### Docker tags
+* `http-port`: The HTTP port exposed by container. We health check this port.
+  (Mutually exclusive with `tls-port`.)
+* `tls-port`: The TLS port exposed by the container. We health check this port,
+  but do not verify the cert. (Mutually exclusive with `http-port`.)
+
+### Vars
+You can pass `--var extra_http_backends` or `--var extra_tls_backends` to add
+more custom backends. The format is a comma-separated list of key=value pairs.
+The key is the local hostname (without domain) to use, and the value is the
+backend host:port.
+
+Example: `--var extra_tls_backends=fw=192.168.1.1:443`
+
+If you also run `haproxy-directory.tmpl`, you may want to add these with `--var
+extra_links`.
+
+If you need more customization over backends, you should edit the template directly.

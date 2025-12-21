@@ -55,6 +55,16 @@ a, a:hover, a:visited, a:active {
 {% endfor %}
 </table>
 
+{%- if extra_links %}
+<h1>Extra Links</h1>
+<ul>
+  {%- for link in extra_links.split(',') -%}
+    {%- set name, href = link.split('=', 1) %}
+    <li><a href="{{ href }}">{{ name }}</a></li>
+  {%- endfor %}
+</ul>
+{%- endif %}
+
 <p>
   <small>As of {{now.astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")}}</small>
 </p>

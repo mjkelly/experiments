@@ -38,18 +38,47 @@ frontend http-in
 
 {% for c in containers -%}
     {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
-    acl is_be{{loop.index}} hdr_end(host) -i {{c.name}}.{{domain}}
-    {%- endif %}
-{%- endfor -%}
-{%- for c in containers -%}
-    {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
-    use_backend be{{loop.index}} if is_be{{loop.index}}
-    {%- endif %}
+    acl is_docker_be{{loop.index}} hdr_end(host) -i {{c.name}}.{{domain}}
+    {%- endif -%}
 {%- endfor %}
+{% if extra_http_backends -%}
+  {%- for name_backend in extra_http_backends.split(',') -%}
+    {%- set name, backend = name_backend.split('=', 1) %}
+    {%- set host, port = backend.split(':', 1) %}
+    acl is_extra_http_be{{loop.index}} hdr_end(host) -i {{ name }}.{{domain}}
+  {%- endfor -%}
+{%- endif %}
+{% if extra_tls_backends -%}
+  {%- for name_backend in extra_tls_backends.split(',') -%}
+    {%- set name, backend = name_backend.split('=', 1) %}
+    {%- set host, port = backend.split(':', 1) %}
+    acl is_extra_tls_be{{loop.index}} hdr_end(host) -i {{ name }}.{{domain}}
+  {%- endfor -%}
+{%- endif %}
 
-{% for c in containers %}
+{% for c in containers -%}
+  {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
+    use_backend docker_be{{loop.index}} if is_docker_be{{loop.index}}
+  {%- endif -%}
+{%- endfor %}
+{% if extra_http_backends -%}
+  {%- for name_backend in extra_http_backends.split(',') -%}
+    {%- set name, backend = name_backend.split('=', 1) %}
+    {%- set host, port = backend.split(':', 1) %}
+    use_backend extra_http_be{{loop.index}} if is_extra_http_be{{loop.index}}
+  {%- endfor -%}
+{%- endif %}
+{% if extra_tls_backends -%}
+  {%- for name_backend in extra_tls_backends.split(',') -%}
+    {%- set name, backend = name_backend.split('=', 1) %}
+    {%- set host, port = backend.split(':', 1) %}
+    use_backend extra_tls_be{{loop.index}} if is_extra_tls_be{{loop.index}}
+  {%- endfor -%}
+{%- endif %}
+
+{% for c in containers -%}
     {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
-backend be{{ loop.index }}
+backend docker_be{{ loop.index }}
 	balance roundrobin
 	option httpclose
 	option forwardfor
@@ -61,6 +90,30 @@ backend be{{ loop.index }}
         {%- endif %}
     {%- endif %}
 {% endfor %}
+
+{% if extra_http_backends -%}
+  {%- for name_backend in extra_http_backends.split(',') -%}
+    {%- set name, backend = name_backend.split('=', 1) %}
+    {%- set host, port = backend.split(':', 1) %}
+backend extra_http_be{{ loop.index }}
+	balance roundrobin
+	option httpclose
+	option forwardfor
+	server 1 {{ backend }} check maxconn 32
+  {%- endfor %}
+{%- endif %}
+
+{% if extra_tls_backends -%}
+  {%- for name_backend in extra_tls_backends.split(',') -%}
+    {%- set name, backend = name_backend.split('=', 1) %}
+    {%- set host, port = backend.split(':', 1) %}
+backend extra_tls_be{{ loop.index }}
+	balance roundrobin
+	option httpclose
+	option forwardfor
+	server 1 {{ backend }} check ssl verify none maxconn 32
+  {%- endfor %}
+{%- endif %}
 
 listen admin
     bind *:8090
