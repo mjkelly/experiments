@@ -25,11 +25,10 @@ defaults
     timeout connect 5000ms
     timeout client 50000ms
     timeout server 50000ms
-    log	global
-    mode http
-    option httplog
-    option dontlognull
+    log global
+    balance roundrobin
     option forwardfor
+    option httpclose
     option http-server-close
 
 frontend http-in
@@ -82,9 +81,6 @@ frontend http-in
 {% for c in containers -%}
     {%- if http_port_by_id[c.id] or tls_port_by_id[c.id] %}
 backend docker_be{{ loop.index }}
-	balance roundrobin
-	option httpclose
-	option forwardfor
         {%- if http_port_by_id[c.id] %}
 	server 1 {{hostname_full}}:{{ http_port_by_id[c.id] }} check maxconn 32
         {%- endif %}
@@ -111,9 +107,6 @@ backend extra_http_be{{ loop.index }}
     {%- set name, backend = name_backend.split('=', 1) %}
     {%- set host, port = backend.split(':', 1) %}
 backend extra_tls_be{{ loop.index }}
-	balance roundrobin
-	option httpclose
-	option forwardfor
 	server 1 {{ backend }} check ssl verify none maxconn 32
   {%- endfor %}
 {%- endif %}
