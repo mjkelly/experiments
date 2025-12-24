@@ -25,7 +25,7 @@ def main(argv):
     logging.info('Loading template %s', FLAGS.template)
 
     d = docker.from_env()
-    containers = d.containers.list()
+    containers = sorted(d.containers.list(), key=lambda c: c.name)
 
     vars = {
         'hostname': hostname,
