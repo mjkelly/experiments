@@ -1,6 +1,26 @@
 #!/bin/bash
-sudo ./docker-tmpl/venv/bin/python3 ./docker-tmpl/generate-cfg.py \
-  --template docker-tmpl/templates/haproxy-directory.tmpl > $HOME/directory.html || exit
+# Usage:
+# 1. Invoke the script with no args to generate a directory file and set up the
+#    container. We stop any existing container if it's running. (It's idempotent.)
+# 2. Pass the arg "lazy" to just rebuild the directory file. The directory
+#    container should pick this up immediately.
+#
+# This script lazily assumes you're in the docker-tmpl directory.
+set -x
+if [[ $1 = "lazy" ]]; then
+  LAZY=1
+else
+  LAZY=0
+fi
+
+sudo ./venv/bin/python3 ./generate-cfg.py \
+  --template ./templates/haproxy-directory.tmpl > $HOME/directory.html || exit
+
+if [[ $LAZY -eq 1 ]]; then
+  echo "lazy mode: skipping container restart"
+  exit 0
+fi
+
 sudo docker rm -f dir
 sudo docker run \
   --name dir \

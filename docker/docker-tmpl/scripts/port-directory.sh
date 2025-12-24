@@ -1,6 +1,6 @@
 #!/bin/bash
-sudo ./docker-tmpl/venv/bin/python3 ./docker-tmpl/generate-cfg.py \
-  --template docker-tmpl/templates/port-directory.tmpl > $HOME/directory.html || exit
+sudo ./venv/bin/python3 ./generate-cfg.py \
+  --template ./templates/port-directory.tmpl > $HOME/directory.html || exit
 sudo docker rm -f dir
 sudo docker run \
   --name dir \

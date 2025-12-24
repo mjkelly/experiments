@@ -28,12 +28,13 @@ defaults
     option httplog
     option dontlognull
     option forwardfor
-    option  http-server-close
+    option http-server-close
 
 frontend http-in
     bind *:80
     {%- if tls_cert %}
     bind *:443 ssl crt {{tls_cert}}
+    http-request redirect scheme https unless { ssl_fc }
     {%- endif %}
 
 {% for c in containers -%}

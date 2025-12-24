@@ -34,21 +34,15 @@ Generate an HTML directory of running containers:
   --template templates/port-directory.tmpl \
   > $HOME/directory.html
 ```
-There is an idempotent script that starts/updates a container like this in
-`scripts/port-directory.sh`.
 
 Generate an haproxy.cfg based on running containers, overriding virtualhost
 hostnames and providing a TLS private key:
 ```
 ./venv/bin/python3 ./generate-cfg.py \
-  --var domain=example.com \
   --var tls_cert=/ssl/fullchain-privkey.pem \
-  --template docker-haproxy.html \
+  --template templates/docker-haproxy.html \
   > $HOME/haproxy.cfg
 ```
-There is an idempotent script that starts/updates a container like this in
-`scripts/haproxy.sh`.
-
 
 If you're running a haproxy instance like the one above, and you have your
 hostnames set up (so e.g. container.example.com points to `container`), you can
@@ -58,11 +52,18 @@ generate a directory by hostname:
   --template templates/haproxy-directory.tmpl \
   > $HOME/directory.html
 ```
-There is an idempotent script that starts/updates a container like this in
-`scripts/haproxy-directory.sh`.
 
 If you're trying to debug why a template isn't working, pass `-v=1` to
 `generate-cfg.py` and it'll output more verbose debug information.
+
+## Scripts
+
+There are idempotent scripts that start/update a container like this in
+the `scripts/` directory. (NOTE: These scripts grab Docker state from just
+before they start, so the directory container will not pick up _itself_ on its
+first run. You can just re-run it to resolve this. This is true for all the
+examples.)
+
 
 ## Using `port-directory.tmpl`
 
