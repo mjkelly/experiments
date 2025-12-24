@@ -18,7 +18,7 @@ fi
 # directory.)
 CERT_DIR="$HOME/haproxy-ssl"
 COMBINED="$CERT_DIR/fullchain-privkey.pem"
-HAIN="$CERT_DIR/fullchain.pem"
+CHAIN="$CERT_DIR/fullchain.pem"
 PRIVKEY="$CERT_DIR/privkey.pem"
 if [[ $CHAIN -nt $COMBINED || $PRIVKEY -nt $COMBINED ]]; then
   cat $CHAIN $PRIVKEY > $COMBINED
@@ -43,13 +43,14 @@ sudo docker run \
   --restart unless-stopped \
   --label http-port=8090 \
   --label role=frontend \
-  --mount type=bind,src=$HOME/haproxy.cfg,dst=/etc/haproxy.cfg \
-  --mount type=bind,src=$COMBINED,dst=/ssl/fullchain-privkey.pem \
+  -v $HOME/haproxy.cfg:/etc/haproxy.cfg:Z \
+  -v $COMBINED:/ssl/fullchain-privkey.pem:Z \
   -p 8090:8090 \
   -p 80:80 \
   -p 443:443 \
   -d \
-  haproxy \
-  haproxy -f /etc/haproxy.cfg
+  haproxytech/haproxy-alpine:3.3 \
+  haproxy -f /etc/haproxy.cfg -W
+
 sleep 1
 sudo docker logs haproxy
