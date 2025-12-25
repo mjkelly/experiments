@@ -99,7 +99,7 @@ def delete_dns(client: Any, zone_id: str, rrs: Dict[str, Any]) -> None:
 @click.option(
     "--ttl",
     type=int,
-    default=600,
+    default=300,
     show_default=True,
     help="TTL to set on the A record")
 @click.option(
