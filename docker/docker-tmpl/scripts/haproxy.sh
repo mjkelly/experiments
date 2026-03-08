@@ -28,10 +28,15 @@ sudo ./venv/bin/python3 ./generate-cfg.py \
   --var tls_cert=/ssl/fullchain-privkey.pem \
   --template ./templates/haproxy.tmpl > $HOME/haproxy.cfg || exit
 
+running=$(sudo docker ps --filter "name=haproxy" --filter "status=running" --quiet)
 if [[ $LAZY -eq 1 ]]; then
-  echo "lazy mode: reloading haproxy"
-  sudo docker kill -s HUP haproxy
-  exit 0
+  if [[ -n $running ]]; then
+    echo "lazy mode: reloading haproxy"
+    sudo docker kill -s HUP haproxy
+    exit 0
+  else
+    echo "WARNING: Lazy mode requested, but container is not running"
+  fi
 fi
 
 sudo docker rm -f haproxy

@@ -16,9 +16,14 @@ fi
 sudo ./venv/bin/python3 ./generate-cfg.py \
   --template ./templates/haproxy-directory.tmpl > $HOME/directory.html || exit
 
+running=$(sudo docker ps --filter "name=dir" --filter "status=running" --quiet)
 if [[ $LAZY -eq 1 ]]; then
-  echo "lazy mode: skipping container restart"
-  exit 0
+  if [[ -n $running ]]; then
+    echo "lazy mode: skipping container restart"
+    exit 0
+  else
+    echo "WARNING: Lazy mode requested, but container is not running"
+  fi
 fi
 
 sudo docker rm -f dir
