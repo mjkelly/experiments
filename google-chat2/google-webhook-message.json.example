@@ -1,0 +1,3 @@
+{
+    "webhook_url": "https://chat.googleapis.com/v1/spaces/SPACE/messages?key=KEY&token=TOKEN"
+}
