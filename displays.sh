@@ -27,8 +27,9 @@ MAIN_DISPLAY=eDP-1
 set -e
 set -u
 function usage() {
-  echo "Usage: $0 <left|right|on|off>" >&2
-  echo "- left|right moves second display to the left or right of main display." >&2
+  echo "Usage: $0 <left|right|above>" >&2
+  echo "       $0 <on|off>" >&2
+  echo "- left|right|above moves second display to the left, to the right, or above main display." >&2
   echo "- on|off enables or disables second display." >&2
   exit 2
 }
@@ -38,7 +39,7 @@ if [[ $# -ne 1 ]]; then
   usage
 fi
 op=$1
-if [[ $op != "left" && $op != "right" && $op != "off" && $op != "on" ]]; then
+if [[ $op != "left" && $op != "right" && $op != "above" && $op != "off" && $op != "on" ]]; then
   usage
 fi
 
@@ -61,16 +62,22 @@ main_width=$(echo "${outputs_json}" |
   jq ".[] | select(.name == \"${MAIN_DISPLAY}\") | .current_mode.width")
 ext_width=$(echo "${outputs_json}" |
   jq -r ".[] | select(.name != \"${MAIN_DISPLAY}\") | .current_mode.width")
+ext_height=$(echo "${outputs_json}" |
+  jq -r ".[] | select(.name != \"${MAIN_DISPLAY}\") | .current_mode.height")
 ext_display=$(echo "${outputs_json}" |
   jq -r ".[] | select(.name != \"${MAIN_DISPLAY}\") | .name")
 
 # Orient/enable/disable the displays
 if [[ $op == left ]]; then
   swaymsg "output ${MAIN_DISPLAY} position \"${ext_width},0\",output ${ext_display} position \"0,0\""
-  echo "Layout: [${ext_display}] <=> [${MAIN_DISPLAY}]"
+  echo "Layout: [${ext_display}][${MAIN_DISPLAY}]"
 elif [[ $op == right ]]; then
   swaymsg "output ${MAIN_DISPLAY} position \"0,0\",output ${ext_display} position \"${main_width},0\""
-  echo "Layout: [${MAIN_DISPLAY}] <=> [${ext_display}]"
+  echo "Layout: [${MAIN_DISPLAY}][${ext_display}]"
+elif [[ $op == above ]]; then
+  swaymsg "output ${MAIN_DISPLAY} position \"0,${ext_height}\",output ${ext_display} position \"0,0\""
+  echo "Layout: [${ext_display}]"
+  echo "        [${MAIN_DISPLAY}]"
 elif [[ $op == off ]]; then
   swaymsg "output ${ext_display} disable"
   echo "${ext_display} ${op}"
