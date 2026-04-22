@@ -1,4 +1,7 @@
 #!/bin/bash
+# ***There is a python version of this script which is slightly better.***
+# See `displays.py`.
+#
 # This script is designed for laptops running the Sway WM with a single
 # external monitor, which may physically be on the left or right. This is an
 # easy way to swap the orientation (which affects things like cursor movement
