@@ -5,7 +5,7 @@ import os
 
 def main_handler(event, context):
     messages = []
-    print 'main_handler called: %s' % event
+    print('main_handler called: %s' % event)
     task_root = os.getenv('LAMBDA_TASK_ROOT')
     git = os.path.join(task_root, 'amzn-git')
     if os.path.isfile(git):
@@ -42,9 +42,9 @@ def main_handler(event, context):
     else:
         data = event
 
-    print 'keys:'
+    print('keys:')
     for k in data.keys():
-        print '    %s' % k
+        print('    %s' % k)
     
     #try:
         #print "SENDER: %s" % data['sender']

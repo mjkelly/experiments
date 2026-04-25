@@ -12,7 +12,7 @@ import os
 import sys
 
 if len(sys.argv) < 2:
-  print >>sys.stderr, "Usage: %s <file>" % sys.argv[0]
+  print("Usage: %s <file>" % sys.argv[0], file=sys.stderr)
   sys.exit(2)
 
 mydom = minidom.parse(sys.argv[1])
@@ -21,7 +21,7 @@ unfixable = 0
 
 for outline in mydom.getElementsByTagName('outline'):
   if not outline.getAttribute('text'):
-    print >>sys.stderr, "%s is missing text attribute" % outline
+    print("%s is missing text attribute" % outline, file=sys.stderr)
 
     fixed = False
     alternate_tags = ['title', 'htmlUrl', 'xmlUrl']
@@ -29,17 +29,17 @@ for outline in mydom.getElementsByTagName('outline'):
       tag_value = outline.getAttribute(tag)
       if tag_value:
         outline.setAttribute('text', tag_value)
-        print >>sys.stderr, "  Using %s attribute (%s)." % (tag, tag_value)
+        print("  Using %s attribute (%s)." % (tag, tag_value), file=sys.stderr)
         fixed = True
         break
 
     if not fixed:
-      print >>sys.stderr, "  ! No title attribute."
+      print("  ! No title attribute.", file=sys.stderr)
       unfixable += 1
 
 if unfixable:
-  print >>sys.stderr, ("! There were some <outline> elements that could not "
-                       "be fixed.")
+  print("! There were some <outline> elements that could not "
+        "be fixed.", file=sys.stderr)
   sys.exit(1)
 
-print mydom.toxml('utf-8')
+sys.stdout.buffer.write(mydom.toxml('utf-8'))

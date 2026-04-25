@@ -92,11 +92,11 @@ def usage():
                'is used. Otherwise, the name of the directory without a\n'
                'suffix is used.\n\n'
                'Any FLAGS are passed straight to tar.' % sys.argv[0])
-  print >>sys.stderr, usage_str
+  print(usage_str, file=sys.stderr)
 
 
 def error(msg):
-  print >>sys.stderr, '%s: %s' % (sys.argv[0], msg)
+  print('%s: %s' % (sys.argv[0], msg), file=sys.stderr)
 
 
 def main(argv):
@@ -115,7 +115,7 @@ def main(argv):
     base = archive_name(tar_file)
     try:
       os.mkdir(base)
-    except OSError, e:
+    except OSError as e:
       error("Could not create directory '%s': %s" % (base, e))
       return 1
   else:

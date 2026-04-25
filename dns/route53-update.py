@@ -104,7 +104,7 @@ def log(msg):
     if opts.syslog:
       syslog.syslog(syslog.LOG_NOTICE, msg)
     if not opts.syslog or sys.stdout.isatty():
-      print msg
+      print(msg)
 
 def vlog(msg):
   """Print if we're in verbose mode."""
@@ -222,11 +222,11 @@ if opts.syslog:
 
 if (not opts.key_id or not opts.key_secret or not opts.domain or
     not opts.zone_id or not opts.ip):
-  print >>sys.stderr, ('--amz-key-id, --amz-key-secret, --domain, --zone-id, '
-                       'and --ip are required.\n')
+  print('--amz-key-id, --amz-key-secret, --domain, --zone-id, '
+        'and --ip are required.\n', file=sys.stderr)
   usage()
 if opts.quiet and opts.verbose:
-  print >>sys.stderr, '--quiet and --verbose are mutually exclusive.'
+  print('--quiet and --verbose are mutually exclusive.', file=sys.stderr)
   usage()
 
 time_str, default_iface_ip = get_time_and_ip()
@@ -243,7 +243,7 @@ else:
   new_ip = opts.ip
 
 if not domain.endswith('.'):
-  print >>sys.stderr, '--domain should be fully-qualified, and end with a dot.'
+  print('--domain should be fully-qualified, and end with a dot.', file=sys.stderr)
   usage()
 
 vlog('Will set %r to %r' % (domain, new_ip))

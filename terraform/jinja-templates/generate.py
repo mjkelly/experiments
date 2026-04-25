@@ -14,14 +14,14 @@ env = jinja2.Environment(loader=jinja2.FileSystemLoader('.'))
 env.filters['json'] = json.dumps
 
 if len(sys.argv) < 2:
-    print >> sys.stderr, 'Usage: %s [files]' % prog
+    print('Usage: %s [files]' % prog, file=sys.stderr)
     sys.exit(2)
 
 SUFFIX = '.tf.j2'
 outfiles = []
 for f in sys.argv[1:]:
     if not f.endswith(SUFFIX):
-        print 'Skipping %r because filename does not end with %r' % (f, SUFFIX)
+        print('Skipping %r because filename does not end with %r' % (f, SUFFIX))
         continue
     # Template file at ./app/templates/example.json
     template = env.get_template(f)
@@ -30,10 +30,10 @@ for f in sys.argv[1:]:
     outfiles.append(out_f)
 
     with open(out_f, 'w') as fh:
-        print 'Writing %s' % out_f
+        print('Writing %s' % out_f)
         fh.write('// Automatically generated from %s by %s\n\n' % (f, prog))
         fh.write(template.render(page={}))
 
 if len(outfiles) > 0:
-    print 'Formatting:'
+    print('Formatting:')
     subprocess.check_call(['terraform', 'fmt'] + outfiles)
