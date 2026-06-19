@@ -2,6 +2,7 @@ local-rsrc/
 *.pyc
 *.localonly
 venv
+.env
 
 ansible/postfix-relay/group_vars/all.yml
 ansible/postfix-relay/hosts

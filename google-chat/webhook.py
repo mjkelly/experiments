@@ -1,24 +1,25 @@
 import socket
 import sys
+import os
 from json import dumps
 
-import yaml
 from httplib2 import Http
 
-CONFIG_FILE = "config.yaml"
+CONFIG_PREFIX = "GCHAT_"
 CONFIG_REQUIRED_KEYS = ["webhook_url", "bot_name"]
 
 def load_config():
     """Load webhook configuration from the config file."""
-    with open(CONFIG_FILE, "r") as config_file:
-        config_data = yaml.safe_load(config_file)
+    config: dict[str, str] = {}
     for key in CONFIG_REQUIRED_KEYS:
-        if key not in config_data:
-            raise KeyError(f"Missing required config key: {key}")
-    return config_data
+        config[key] = os.getenv(CONFIG_PREFIX + key.upper())
+        if not config[key]:
+            raise KeyError(f"Missing environment variable: {CONFIG_PREFIX +
+                           key.upper()}")
+    return config
 
 
-def send_message(message: str, config):
+def send_message(message: str, config: dict[str, str]):
     host = socket.gethostname()
     app_message = {
         "text": f"{message} [from {config['bot_name']} on {host}]",
